@@ -28,8 +28,15 @@ for card in data['cards']:
         "upgrade": upgraded == 1 and "已升级" or "不可升级_upgrade",
         "image": f'{card_id.lower()}.png',
     }
-    if upgraded != 1:
-        new_card["page"] = card.get("name", "")
+    
+    card_name = card.get("name", "")
+    if upgraded == 1:
+        card_name = card_name.replace("+", "")
+    card_disambiguated = card_name + "(卡牌)"
+    if site.pages[card_disambiguated].exists:
+        card_name = card_disambiguated
+    new_card["page"] = card_name
+
     cards[card_id] = new_card
 for card in has_upgrades:
     base_id = card
