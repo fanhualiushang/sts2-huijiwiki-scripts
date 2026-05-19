@@ -6,6 +6,8 @@ print(f"共找到 {len(data['cards'])} 张卡牌数据，正在处理...")
 
 # cards_data_from_api = {card['id']: card for card in get_data_by_api('cards')}
 
+allpages = {page.name for page in site.allpages()}
+
 cards = {}
 has_upgrades = set()
 for card in data['cards']:
@@ -33,7 +35,7 @@ for card in data['cards']:
     if upgraded == 1:
         card_name = card_name.replace("+", "")
     card_disambiguated = card_name + "(卡牌)"
-    if site.pages[card_disambiguated].exists:
+    if card_disambiguated in allpages:
         card_name = card_disambiguated
     new_card["page"] = card_name
 
