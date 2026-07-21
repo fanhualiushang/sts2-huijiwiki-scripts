@@ -152,11 +152,11 @@ pagedata = json.dumps({
     "data": result,
 }, ensure_ascii=False, indent=2)
 
-# with open(f"cards_{ver}.json", "w", encoding="utf-8") as f:
-#     f.write(pagedata)
+with open(f"cards_{ver}.json", "w", encoding="utf-8") as f:
+    f.write(pagedata)
 
-old_data_parsed = parse_tabx("Data:Card.tabx", "id")
-site.pages["Data:Card.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")
-new_data_parsed = parse_tabx("Data:Card.tabx", "id")
-diff = diff_tabx_records(old_data_parsed, new_data_parsed)
-update_card_images(diff)
+# old_data_parsed = parse_tabx("Data:Card.tabx", "id")
+# site.pages["Data:Card.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")
+# new_data_parsed = parse_tabx("Data:Card.tabx", "id")
+# diff = diff_tabx_records(old_data_parsed, new_data_parsed)
+# update_card_images(diff)

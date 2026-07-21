@@ -89,4 +89,7 @@ pagedata = json.dumps({
     "schema": { "fields": process_fields(field_order) },
     "data": result,
 }, ensure_ascii=False)
-site.pages["Data:Monster.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")
+
+with open(f"monsters_{ver}.json", "w", encoding="utf-8") as f:
+    f.write(pagedata)
+# site.pages["Data:Monster.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")
