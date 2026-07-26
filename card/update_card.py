@@ -69,6 +69,36 @@ for card in cards.values():
     if card["cost"] == "":
         card["cost"] = "无"
 
+# 手动添加 "跟进" 卡牌（不在API导出数据中）
+cards["follow_through"] = {
+    "category": "card",
+    "id": "follow_through",
+    "name": "跟进",
+    "color": "静默猎手",
+    "rarity": "普通",
+    "type": "攻击",
+    "cost": "一",
+    "description": "造成7点伤害。<br>如果你的手牌中还有至少5张其他牌，则额外命中一次。",
+    "description_raw": "造成7点伤害。如果你的手牌中还有至少5张其他牌，则额外命中一次。",
+    "upgrade": "follow_through_upgrade",
+    "image": "follow_through.png",
+    "page": "跟进",
+}
+cards["follow_through_upgrade"] = {
+    "category": "card",
+    "id": "follow_through_upgrade",
+    "name": "跟进+",
+    "color": "静默猎手",
+    "rarity": "普通",
+    "type": "攻击",
+    "cost": "一",
+    "description": "造成9点伤害。<br>如果你的手牌中还有至少5张其他牌，则额外命中一次。",
+    "description_raw": "造成9点伤害。如果你的手牌中还有至少5张其他牌，则额外命中一次。",
+    "upgrade": "已升级",
+    "image": "follow_through_upgrade.png",
+    "page": "跟进",
+}
+
 # 从 mapping 的值构建排序顺序
 color_order = list(color_mapping.values())
 rarity_order = list(rarity_mapping.values())
@@ -152,11 +182,11 @@ pagedata = json.dumps({
     "data": result,
 }, ensure_ascii=False, indent=2)
 
-# with open(f"cards_{ver}.json", "w", encoding="utf-8") as f:
-#     f.write(pagedata)
+with open(f"cards_{ver}.json", "w", encoding="utf-8") as f:
+    f.write(pagedata)
 
-old_data_parsed = parse_tabx("Data:Card.tabx", "id")
-site.pages["Data:Card.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")
-new_data_parsed = parse_tabx("Data:Card.tabx", "id")
-diff = diff_tabx_records(old_data_parsed, new_data_parsed)
-update_card_images(diff)
+# old_data_parsed = parse_tabx("Data:Card.tabx", "id")
+# site.pages["Data:Card.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")
+# new_data_parsed = parse_tabx("Data:Card.tabx", "id")
+# diff = diff_tabx_records(old_data_parsed, new_data_parsed)
+# update_card_images(diff)

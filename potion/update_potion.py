@@ -72,6 +72,6 @@ pagedata = json.dumps({
     "data": result,
 }, ensure_ascii=False, indent=2)
 
-# with open(f"potions_{ver}.json", "w", encoding="utf-8") as f:
-#     f.write(pagedata)
-site.pages["Data:Potion.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")
+with open(f"potions_{ver}.json", "w", encoding="utf-8") as f:
+    f.write(pagedata)
+# site.pages["Data:Potion.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")

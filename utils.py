@@ -15,19 +15,16 @@ from tag_parser import parse_tag
 from icu import Collator, Locale
 collator = Collator.createInstance(Locale("zh@collation=pinyin"))
 
-with open('config.json','r', encoding='utf-8') as f:
-    config = json.load(f)
-
 site = Site('sts2.huijiwiki.com', custom_headers={
-            'X-authkey': config["huijiwiki"]["X-authkey"]})
+            'X-authkey': os.environ.get('HUIJI_WIKI_STS2_KEY')})
 site.login(
-    username = config["huijiwiki"]["username"],
-    password = config["huijiwiki"]["password"],
+    username = os.environ.get('HUIJI_WIKI_USERNAME'),
+    password = os.environ.get('HUIJI_WIKI_PASSWORD'),
 )
 
-ver = '0.99.1'
+ver = '0.109.0'
 
-with open('C:/Program Files (x86)/Steam/steamapps/common/Slay the Spire 2/export/items.json', 'r', encoding='utf-8') as f:
+with open('D:\\sts2_bot\\export-0.109.0\\items.json', 'r', encoding='utf-8') as f:
     data = json.load(f)
 
 color_mapping = {
@@ -74,6 +71,9 @@ cost_mapping = {
     "7": "七",
     "8": "八",
     "9": "九",
+    "10": "十",
+    "11": "十一",
+    "12": "十二",
     "X": "X",
 }
 tier_mapping = {
@@ -200,7 +200,7 @@ def diff_tabx_records(old_data, new_data):
     return sorted(diff_keys)
 
 def update_card_images(ids: list[str]):
-    base_path = 'C:/Program Files (x86)/Steam/steamapps/common/Slay the Spire 2/export/slay-the-spire-2'
+    base_path = 'D:\\sts2_bot\\export-0.109.0'
     ids = [id.upper() for id in ids]
     print(ids)
     card_images = os.path.join(base_path, 'card-images')
