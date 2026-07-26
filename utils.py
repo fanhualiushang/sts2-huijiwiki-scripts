@@ -23,6 +23,7 @@ site.login(
 )
 
 ver = '0.109.0'
+use_beta_data = True
 
 with open('D:\\sts2_bot\\export-0.109.0\\items.json', 'r', encoding='utf-8') as f:
     data = json.load(f)
@@ -151,7 +152,10 @@ def del_tags(text):
     return re.sub(r'\[/?[a-z]+(?::\d+)?\]', '', text)
 
 def get_data_by_api(route):
-    response = requests.get(f"https://spire-codex.com/api/{route}?lang=zhs")
+    url = f"https://spire-codex.com/api/{route}?lang=zhs"
+    if use_beta_data:
+        url += "&channel=beta"
+    response = requests.get(url)
     response.raise_for_status()
     return response.json()
 
