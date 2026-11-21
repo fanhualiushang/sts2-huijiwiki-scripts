@@ -20,8 +20,10 @@ for power in data:
     power["image"] = f'{power["id"]}_power.png'
     if power["name"] in name_remap:
         power["name"] = name_remap[power["name"]]
-    power["page"] = power["name"]
-    power["allow_negative"] = str(power["allow_negative"])
+    power["page"] = power.get("_wiki_page", power["name"])
+    # This Wiki column is a legacy editorial convention, not the C# bool.
+    # The merger copies the formal table's few True values unchanged.
+    power["allow_negative"] = "None"
 
 field_order = [
     "category",

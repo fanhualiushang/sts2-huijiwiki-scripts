@@ -101,7 +101,7 @@ def test_all_original_writers_offline_and_schema(extracted, tmp_path, monkeypatc
             assert all(r[fields.index("multiplayer_only")] in ("是", "否") for r in doc["data"])
         if category == "power":
             assert all(r[fields.index("category")] == "power" for r in doc["data"])
-            assert all(r[fields.index("allow_negative")] in ("True", "False") for r in doc["data"])
+            assert all(r[fields.index("allow_negative")] in ("True", "None") for r in doc["data"])
     sys.modules.pop("utils", None)
 
 
@@ -164,7 +164,7 @@ def test_monster_editorial_fields_are_preserved(extracted, tmp_path, monkeypatch
     output_fields = [f["name"] for f in result["schema"]["fields"]]
     row = [result["data"][0][output_fields.index(f)] for f in fields]
     assert row[2] == "100 / 200 / 300"
-    assert row[3:] == ["Boss", "原有状态列表", "第三幕", "人工备注", "实验体"]
+    assert row[3:] == ["Boss", "{{状态|适者生存}}{{状态|激怒}}2 （高进阶3）", "荣耀", "人工备注", "实验体"]
 
 
 def test_baseline_selects_version_not_report(tmp_path, monkeypatch):
@@ -172,4 +172,4 @@ def test_baseline_selects_version_not_report(tmp_path, monkeypatch):
     write_json(tmp_path / "powers_0.9.0.json", {"version": "old"})
     write_json(tmp_path / "powers_0.113.1.json", {"version": "new"})
     write_json(tmp_path / "powers_0.113.1.json.report.json", {"not_a_table": True})
-    assert load_tabx("Data:Power.tabx") == {"version": "new"}
+    assert load_tabx("Data:Power.tabx")["version"] == "new"

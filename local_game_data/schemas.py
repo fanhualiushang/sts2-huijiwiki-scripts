@@ -14,9 +14,10 @@ FIELDS = {
 }
 CATEGORY_VALUES = {"cards": "card_beta", "relics": "relic_beta", "powers": "power", "monsters": "monster_beta"}
 EDITORIAL_FIELDS = {"cards": ("page", "beta_image", "predecessor"),
-                    "relics": ("page", "predecessor"), "monsters": ("page", "tier", "power", "stage", "note", "icon")}
+                    "relics": ("page", "predecessor"), "powers": ("page", "allow_negative"),
+                    "monsters": ("page", "note", "icon")}
 DEFAULT_VALUES = {"cards": {"beta_image": "None", "predecessor": None},
-                  "relics": {"predecessor": None}, "monsters": {"icon": None}}
+                  "relics": {"predecessor": None}, "powers": {"allow_negative": "None"}, "monsters": {"icon": None}}
 
 
 def field_definitions(category):
@@ -47,4 +48,6 @@ def normalize_record(category, record):
             result["multiplayer_only"] = "None"
     if category == "powers" and isinstance(result.get("allow_negative"), bool):
         result["allow_negative"] = str(result["allow_negative"])
+    elif category == "powers" and result.get("allow_negative") is None:
+        result["allow_negative"] = "None"
     return result

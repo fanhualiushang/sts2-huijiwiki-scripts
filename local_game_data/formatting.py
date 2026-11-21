@@ -57,6 +57,10 @@ def render(template, variables):
             raise ExtractionError(f"Unknown localization condition {test}")
         rhs = Decimal(match[2])
         op = match[1] or "="
+        if value == "X":
+            if rhs != 0:
+                raise ExtractionError("A symbolic stack amount cannot select a numeric threshold")
+            value = 1  # Generic positive-stack wording; the displayed amount remains X.
         return {">=": lambda: value >= rhs, "<=": lambda: value <= rhs,
                 "!=": lambda: value != rhs, "==": lambda: value == rhs,
                 "=": lambda: value == rhs, ">": lambda: value > rhs, "<": lambda: value < rhs}[op]()
@@ -76,10 +80,11 @@ def render(template, variables):
         else:
             content = ":".join(parts[1:])
         if fmt in ("diff", "inverseDiff", "number"):
-            return number(int(scalar))
+            return "X" if scalar == "X" else number(int(scalar))
         if fmt == "abs":
-            return number(abs(scalar))
+            return "X" if scalar == "X" else number(abs(scalar))
         if fmt in ("percentMore", "percentLess"):
+            if scalar == "X": return "X"
             percent = (scalar - 1) * 100 if fmt == "percentMore" else (1 - scalar) * 100
             return number(int(round(percent)))
         if fmt in ("energyIcons", "starIcons"):

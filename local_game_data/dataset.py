@@ -62,6 +62,18 @@ class Extractor:
         self.routes = {k: [] for k in ("cards", "relics", "potions", "powers", "monsters", "events", "ancients", "keywords", "enchantments", "afflictions")}
         self.card_variants = []
         self.pools = self.get_pools()
+        self.relic_upgrade_pools = self.get_relic_upgrade_pools()
+
+    def get_relic_upgrade_pools(self):
+        result = {}
+        for model in self.index.models("RelicModel"):
+            pairs = re.findall(r"ModelDb\.Relic<(\w+)>\(\)\.Id\s*,\s*ModelDb\.Relic<(\w+)>\(\)", text(model.node))
+            for original, upgraded in pairs:
+                character_pools = [p for p in self.pools["relics"].get(original, []) if p["pool"] != "colorless"]
+                if len({p["pool"] for p in character_pools}) == 1:
+                    result[upgraded] = {**character_pools[0], "upgraded_from": original,
+                                        "source": str(model.path.relative_to(self.source))}
+        return result
 
     def issue(self, record, field, error, severity="error"):
         entry = {"category": record.get("_category"), "id": record["id"], "field": field,
@@ -152,6 +164,10 @@ class Extractor:
             self.issue(record, field, f"{model.name} is not present in any content pool")
         else:
             record[field] = pools[0]["pool"]
+        if record["_category"] == "relics" and model.name in self.relic_upgrade_pools:
+            relationship = self.relic_upgrade_pools[model.name]
+            record[field] = relationship["pool"]
+            record["_pool_relationship"] = relationship
 
     def cards(self):
         models = list(self.index.models("CardModel"))
@@ -264,10 +280,50 @@ class Extractor:
                     self.attempt(record, field, lambda prop=prop: ev.member(prop))
             self.attempt(record, "description", lambda: self.localized_property(ev, "Description", record))
             if category == "powers":
-                record["smart_description_template"] = self.tables[category].get(entry + ".smartDescription")
+                # Some generic descriptions contain {Amount}, but a canonical
+                # PowerModel is not an applied power instance. Recover a base
+                # amount from the matching card's actual Apply call when possible.
+                card_name = "MegaCrit.Sts2.Core.Models.Cards." + model.name.removesuffix("Power")
+                card = self.index.types.get(card_name)
+                if card is not None:
+                    try:
+                        from .csharp import walk
+                        ce = Evaluator(self.index, card)
+                        ce.card_constructor()
+                        ce.initialize_vars()
+                        _, on_play = self.index.find(card.key, "OnPlay")
+                        amounts = []
+                        for call in walk(on_play[0]):
+                            if call.type != "invocation_expression" or text(call.child_by_field_name("function")) != f"PowerCmd.Apply<{model.name}>": continue
+                            arguments = children(call.child_by_field_name("arguments"), "argument")
+                            if len(arguments) > 2:
+                                amount = ce.eval(arguments[2].named_children[-1])
+                                if isinstance(amount, (int, Decimal)) and amount > 0: amounts.append(amount)
+                        if amounts and len(set(amounts)) == 1:
+                            record["default_application_amount"] = amounts[0]
+                            record["_application_amount_source"] = str(card.path.relative_to(self.source))
+                    except (ExtractionError, KeyError, TypeError, ValueError, IndexError):
+                        pass
+                try:
+                    description = ev.member("Description")
+                    if isinstance(description, LocValue):
+                        record["description_template"] = self.loc(description.table, description.key)
+                    key = ev.member("SmartDescriptionLocKey")
+                    record["smart_description_template"] = self.tables[category].get(key)
+                except ExtractionError:
+                    record["smart_description_template"] = self.tables[category].get(entry + ".smartDescription")
+                record["description_variables"] = deepcopy(ev.values["DynamicVars"])
+                record["runtime_description_variables"] = sorted(set(re.findall(
+                    r'DynamicVars\["([^"]+)"\]\.BaseValue\s*(?:\+\+|--)', text(model.node))))
+                for parent, page in (("TemporaryStrengthPower", "临时力量"), ("TemporaryDexterityPower", "临时敏捷"), ("TemporaryFocusPower", "临时集中")):
+                    if self.index.derives(model.key, parent):
+                        record["_wiki_page"] = "临时失去力量" if parent == "TemporaryStrengthPower" and not ev.member("IsPositive") else page
             self.routes[category].append(record)
 
     def monsters(self):
+        from .monster_info import encounter_metadata, starting_power_text
+        metadata = encounter_metadata(self)
+        powers = {p["_class"]: p for p in self.routes["powers"]}
         models = list(self.index.models("MonsterModel"))
         self.counts["monsters"] = len(models)
         for model in models:
@@ -279,6 +335,18 @@ class Extractor:
                 ev.ascension = ascension
                 for field, prop in (("min_hp", "MinInitialHp"), ("max_hp", "MaxInitialHp")):
                     self.attempt(record, field + suffix, lambda prop=prop: " / ".join(number(ev.member(k)) for k in forms) if len(forms) > 1 else ev.member(prop))
+            placement = metadata.get(model.name, {})
+            if placement:
+                record["_placement_sources"] = placement["sources"]
+                for field, key in (("tier", "tiers"), ("stage", "stages")):
+                    choices = sorted(placement[key])
+                    record["_" + field + "_candidates"] = choices
+                    if len(choices) == 1: record[field] = choices[0]
+            try:
+                power = starting_power_text(self, model, powers)
+                if power is not None: record["power"] = power
+            except (ExtractionError, KeyError, TypeError, ValueError, IndexError) as exc:
+                record.setdefault("_metadata_gaps", {})["power"] = str(exc)
             self.routes["monsters"].append(record)
 
     def events(self):

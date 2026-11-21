@@ -10,7 +10,9 @@ import re
 
 from .dataset import Dataset, write_json
 from .config import load_config
+from .baseline import read_tabx_xlsx
 from .schemas import FIELDS, EDITORIAL_FIELDS, document_for, normalize_record
+from .power_text import reconcile_description
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,9 +23,16 @@ def baseline_path(page):
     settings = load_config()
     directory = settings.baseline_dir
     name = page.removeprefix("Data:")
-    choices = [directory / (name + ".json"), directory / (name.replace(".tabx", "") + ".json")]
     category = next((key for key, value in settings.values["wiki"]["tables"].items() if value == page), None)
     category = category or CATEGORIES.get(name.removesuffix(".tabx").removesuffix("_BETA"))
+    reference = settings.baseline_page_for(category).removeprefix("Data:") if category else name
+    def candidates(base):
+        return [directory / ("Data_" + base + ".xlsx"), directory / (base + ".xlsx"),
+                directory / (base + ".json"), directory / ("Data_" + base + ".json"),
+                directory / (base.replace(".tabx", "") + ".json")]
+    choices = candidates(reference)
+    if reference != name:
+        choices.extend(candidates(name))
     if category:
         versions = [p for p in directory.glob(category + "_*.json") if not p.name.endswith(".report.json")]
         choices.extend(sorted(versions, key=lambda p: tuple(int(n) for n in re.findall(r"\d+", p.stem)), reverse=True))
@@ -33,7 +42,11 @@ def baseline_path(page):
 def load_tabx(page):
     path = baseline_path(page)
     if path:
-        return json.loads(path.read_text(encoding="utf-8-sig"))
+        if path.suffix.lower() == ".xlsx":
+            return read_tabx_xlsx(path)
+        document = json.loads(path.read_text(encoding="utf-8-sig"))
+        document["_baseline_source"] = str(path.resolve())
+        return document
     return None
 
 
@@ -92,7 +105,10 @@ def write_tabx(filename, content):
     for row in source_rows:
         key = row["id"].lower() + ("_upgrade" if row.get("upgrades") == 1 else "")
         source[key] = row
-    merged, withheld, preserved = {}, [], []
+    merged, withheld, preserved, description_choices, metadata_fallbacks = {}, [], [], [], []
+    power_aliases = {r["id"].lower(): r.get("_wiki_page", r.get("name")) for r in dataset.document["routes"].get("powers", [])}
+    def power_tags(value):
+        return {power_aliases.get(name.lower(), name) for name in re.findall(r'\{\{状态\|([^}|]+)', value or "")}
     for row in document["data"]:
         record = dict(zip(fields, row))
         key = record["id"]
@@ -118,6 +134,26 @@ def write_tabx(filename, content):
                 # Null, "None" and empty strings can be intentional Wiki values.
                 if field in old:
                     record[field] = old[field]
+            if category == "monsters":
+                for field in ("tier", "power", "stage"):
+                    if source.get(key, {}).get(field) is not None:
+                        record[field] = source[key][field]
+                    elif field in old:
+                        record[field] = old[field]
+                if old.get("tier") in ("爪牙", "衍生"):
+                    # Encounter grade describes the fight, not whether a unit
+                    # was summoned. The formal table carries that distinction.
+                    record["tier"] = old["tier"]
+                missing_effects = power_tags(old.get("power")) - power_tags(record.get("power"))
+                if missing_effects:
+                    record["power"] = old["power"]
+                    metadata_fallbacks.append({"id": key, "field": "power", "reason": "self_hook_does_not_cover_existing_spawn_effects", "retained_effects": sorted(missing_effects)})
+        if category in ("cards", "relics") and key not in baseline:
+            record["predecessor"] = re.sub(r"\+\d*$", "", record.get("name", ""))
+        if category == "powers":
+            description, choice = reconcile_description(source.get(key, {}), baseline.get(key, {}), record.get("description"))
+            if description is not None: record["description"] = description
+            if choice: description_choices.append({"id": key, **choice})
         merged[key] = record
     # Missing models can be a decompilation gap rather than a game removal.
     for key, row in baseline.items():
@@ -127,10 +163,6 @@ def write_tabx(filename, content):
     target_fields = FIELDS.get(category, fields)
     normalized = []
     for key, row in merged.items():
-        if category == "powers":
-            game_row = source.get(key, {})
-            if isinstance(game_row.get("allow_negative"), bool) and "allow_negative" not in game_row.get("_errors", {}):
-                row = {**row, "allow_negative": game_row["allow_negative"]}
         normalized.append(normalize_record(category, row))
     rows = [[r.get(f) for f in target_fields] for r in normalized]
     if category in FIELDS:
@@ -144,6 +176,9 @@ def write_tabx(filename, content):
               "preserved_baseline_ids": sorted(set(preserved)),
               "editorial_baseline_missing": missing_editorial_baseline,
               "baseline_partial": partial_baseline,
+              "baseline_source": baseline_document.get("_baseline_source") if baseline_document else None,
+              "description_rendering": description_choices,
+              "metadata_fallbacks": metadata_fallbacks,
               "wiki_page": page,
               "ready_to_publish": not withheld and not missing_editorial_baseline and not partial_baseline}
     write_json(str(filename) + ".report.json", status)
@@ -154,6 +189,7 @@ def write_tabx(filename, content):
 
 
 def export_all(dataset_path, output, baseline=None, config_path=None):
+    dataset_path = Path(dataset_path).resolve()
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=True)
     old_cwd, old_path = Path.cwd(), list(sys.path)
@@ -173,6 +209,8 @@ def export_all(dataset_path, output, baseline=None, config_path=None):
         sys.modules.pop("utils", None)
         for category in ("card", "relic", "potion", "power", "monster", "event", "keyword"):
             runpy.run_path(str(ROOT / category / ("update_" + category + ".py")), run_name="__main__")
+        from .comparison import write_comparison
+        write_comparison(dataset_path, output)
     finally:
         os.chdir(old_cwd)
         for key, value in old_env.items():
@@ -206,7 +244,7 @@ def snapshot_wiki(output=None):
     settings = load_config()
     output = Path(output) if output is not None else settings.baseline_dir
     site = create_wiki_site()
-    for page in settings.values["wiki"]["tables"].values():
+    for page in dict.fromkeys(settings.values["wiki"]["baseline_tables"].values()):
         document = json.loads(site.pages[page].text())
         records(document)  # Validate before replacing the local cache.
         write_json(output / (page.removeprefix("Data:") + ".json"), document)

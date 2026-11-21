@@ -21,6 +21,9 @@ DEFAULTS = {
                    "powers": "Data:Power_BETA.tabx", "monsters": "Data:Monster_BETA.tabx",
                    "potions": "Data:Potion.tabx", "events": "Data:Event.tabx",
                    "keywords": "Data:Keyword.tabx"},
+        "baseline_tables": {"cards": "Data:Card.tabx", "relics": "Data:Relic.tabx",
+                            "powers": "Data:Power.tabx", "monsters": "Data:Monster.tabx",
+                            "potions": "Data:Potion.tabx", "events": "Data:Event.tabx", "keywords": "Data:Keyword.tabx"},
     },
 }
 ENV_OVERRIDES = {
@@ -99,6 +102,9 @@ class Settings:
     def page_for(self, category):
         return self.values["wiki"]["tables"][category]
 
+    def baseline_page_for(self, category):
+        return self.values["wiki"]["baseline_tables"][category]
+
     def credentials(self):
         # No actual credential is stored in Settings or configuration examples.
         wiki = self.values["wiki"]
@@ -128,7 +134,8 @@ def load_config(path=None):
         if env_name in os.environ:
             values[section][key] = os.environ[env_name]
     values["wiki"]["offline"] = boolean(os.environ.get("STS2_OFFLINE", values["wiki"]["offline"]), "wiki.offline / STS2_OFFLINE")
-    for category, page in values["wiki"]["tables"].items():
-        if not isinstance(page, str) or not page.startswith("Data:") or not page.endswith(".tabx"):
-            raise ValueError(f"wiki.tables.{category} 必须是 Data:名称.tabx")
+    for section in ("tables", "baseline_tables"):
+        for category, page in values["wiki"][section].items():
+            if not isinstance(page, str) or not page.startswith("Data:") or not page.endswith(".tabx"):
+                raise ValueError(f"wiki.{section}.{category} 必须是 Data:名称.tabx")
     return Settings(selected, values)

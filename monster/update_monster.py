@@ -24,15 +24,9 @@ for monster in data:
         monster["ascendermaxHP"] = str(monster["max_hp_ascension"])
     else:
         monster["ascendermaxHP"] = monster["ascenderminHP"]
-    monster['tier'] = monster_data.get(monster['id'], {}).get('tier', '')
-    if not monster['tier']:
-        monster['tier'] = ''
-    monster['power'] = monster_data.get(monster['id'], {}).get('power', '')
-    if not monster['power']:
-        monster['power'] = ''
-    monster['stage'] = monster_data.get(monster['id'], {}).get('stage', '')
-    if not monster['stage']:
-        monster['stage'] = ''
+    for field in ('tier', 'power', 'stage'):
+        if monster.get(field) is None:
+            monster[field] = monster_data.get(monster['id'], {}).get(field)
     monster['note'] = monster_data.get(monster['id'], {}).get('note', '')
     if monster['note'] == '' or not monster['note']:
         monster['note'] = '无'

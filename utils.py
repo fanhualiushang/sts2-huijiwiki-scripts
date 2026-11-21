@@ -160,8 +160,8 @@ def clean_text(text: str, color: str = "colorless", parsetag: bool = True):
     text = text.replace("\n", "<br>")
     if parsetag:
         text = parse_tag(text, color)
-        if color and color != "" and color in energy_mapping:
-            text = text.replace("[E]", f"[[File:{energy_mapping[color]}_energy_icon.png|16px|link=能量]]")
+        prefix = energy_mapping.get(color, "colorless")
+        text = text.replace("[E]", f"[[File:{prefix}_energy_icon.png|16px|link=能量]]")
         text = text.replace("[STAR]", "[[File:star_icon.png|16px|link=辉星]]")
     else:
         text = text.replace("[E]", "能量").replace("[STAR]", "辉星")

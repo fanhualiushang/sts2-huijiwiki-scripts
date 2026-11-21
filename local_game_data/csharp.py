@@ -64,6 +64,8 @@ class SourceIndex:
         paths += sorted((self.root / "src/Core/Entities").rglob("*.cs"))
         paths += sorted((self.root / "src/Core/ValueProps").glob("*.cs"))
         paths += sorted((self.root / "src/Core/Timeline/Epochs").glob("*.cs"))
+        room_type = self.root / "src/Core/Rooms/RoomType.cs"
+        if room_type.is_file(): paths.append(room_type)
         for path in paths:
             source = path.read_bytes()
             if not source.strip():

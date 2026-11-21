@@ -103,13 +103,14 @@ def test_snapshot_uses_configured_pages_and_credentials(tmp_path, monkeypatch):
     fixtures = json.loads((ROOT / "tests/fixtures/wiki_beta_tables.json").read_text(encoding="utf-8"))
     path = tmp_path / "config.json"
     write_json(path, {"wiki": {"host": "wiki.example.test", "username_env": "SNAPSHOT_USER", "password_env": "SNAPSHOT_PASSWORD", "authkey_env": "SNAPSHOT_KEY",
-                               "tables": {"cards": "Data:CustomCard_BETA.tabx"}}})
+                               "tables": {"cards": "Data:CustomCard_BETA.tabx"},
+                               "baseline_tables": {"cards": "Data:CustomReferenceCard.tabx"}}})
     monkeypatch.setenv("STS2_CONFIG", str(path))
     monkeypatch.setenv("SNAPSHOT_USER", "snapshot-user")
     monkeypatch.setenv("SNAPSHOT_PASSWORD", "snapshot-password")
     monkeypatch.setenv("SNAPSHOT_KEY", "snapshot-key")
     pages, calls = {}, []
-    for name in load_config().values["wiki"]["tables"].values():
+    for name in load_config().values["wiki"]["baseline_tables"].values():
         sample = fixtures.get(name.removeprefix("Data:").removesuffix(".tabx")) or fixtures["Card_BETA"]
         pages[name] = SimpleNamespace(text=lambda sample=sample: json.dumps(sample))
     class FakeSite:
@@ -124,8 +125,9 @@ def test_snapshot_uses_configured_pages_and_credentials(tmp_path, monkeypatch):
     monkeypatch.setattr(mwclient, "Site", FakeSite)
     snapshot_wiki(tmp_path / "baseline")
     assert calls == [("wiki.example.test", {"X-authkey": "snapshot-key"}), {"username": "snapshot-user", "password": "snapshot-password"}]
-    assert (tmp_path / "baseline/CustomCard_BETA.tabx.json").is_file()
-    assert (tmp_path / "baseline/Monster_BETA.tabx.json").is_file()
+    assert (tmp_path / "baseline/CustomReferenceCard.tabx.json").is_file()
+    assert (tmp_path / "baseline/Monster.tabx.json").is_file()
+    assert not (tmp_path / "baseline/CustomCard_BETA.tabx.json").exists()
     assert not (tmp_path / "baseline/Card.tabx.json").exists()
     assert json.loads((tmp_path / "baseline/page_names.json").read_text(encoding="utf-8")) == ["打击", "力量"]
 
@@ -158,8 +160,8 @@ def test_beta_schema_and_editorial_fields_survive_export(extracted, tmp_path):
             assert rows["divine_right"]["predecessor"] is None
             assert rows["burning_blood"]["ancient"] is None
         elif category == "powers":
-            assert rows["strength"]["allow_negative"] == "True"
-            assert rows["accelerant"]["allow_negative"] == "False"
+            assert rows["strength"]["allow_negative"] == "None"
+            assert rows["accelerant"]["allow_negative"] == "None"
             assert all(r["category"] == "power" for r in rows.values())
         else:
             assert rows["aeonglass"]["icon"] == "aeonglass_bossicon.png"

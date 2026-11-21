@@ -19,7 +19,7 @@ python -m venv .venv
 
 - `game`：恢复目录、游戏版本、语言。每次解包后更新 `game.version`。
 - `paths`：输出目录、本地数据文件、Wiki 快照和图片目录。`dataset_file`、`baseline_dir` 留为 `null` 时，自动使用输出目录中的 `dataset.json` 和 `baseline`。
-- `wiki`：站点、离线开关、凭据所用的环境变量名，以及各分类对应的 `Data:*.tabx` 页面。
+- `wiki`：站点、离线开关、凭据环境变量名。`tables` 是导出结果的目标页，`baseline_tables` 是继承人工字段的正式源表，两者独立配置。
 
 配置中的所有相对路径以配置文件所在目录为基准，不受运行脚本的当前目录影响。优先级为 **命令行参数 > 环境变量 > config.json > 内置默认值**。用 `--config` 或 `STS2_CONFIG` 选择其他配置文件；命令行路径以当前工作目录为基准。
 
@@ -54,7 +54,15 @@ python -m venv .venv
 
 ## 保留 Wiki 人工内容
 
-首次迁移前，需要保留卡牌的 `page/beta_image/predecessor`、遗物的 `page/predecessor`，以及怪物的 `tier/power/stage/note/page/icon`。将完整 Wiki tabx JSON 放入配置指定的快照目录，默认使用 `Card_BETA.tabx.json`、`Relic_BETA.tabx.json`、`Power_BETA.tabx.json`、`Monster_BETA.tabx.json`；已有 `cards_<版本>.json` 等导出格式也可放入该目录。页面名清单可保存为 `page_names.json`（字符串数组）。
+正式表是人工字段的来源：默认读取 `Data:Card.tabx`、`Data:Relic.tabx`、`Data:Power.tabx`、`Data:Monster.tabx`，生成结果仍面向 BETA 目标表。
+
+把 Wiki 下载的 `Data_Card.tabx.xlsx`、`Data_Relic.tabx.xlsx`、`Data_Power.tabx.xlsx`、`Data_Monster.tabx.xlsx` 直接放入 `paths.baseline_dir`（默认 `local_data/baseline`）。读取器识别下载文件中的 `data` 和 `fields` 工作表，不修改 xlsx，不需要 Excel 或额外的 Excel 库。稀疏空单元格保持 `null`，文字 `"None"` 保持文字。
+
+优先级为正式源表的 xlsx、同名正式 JSON、目标表 JSON 片段、旧版本导出 JSON。存在完整正式 xlsx 时，先前的 BETA 片段不会覆盖它。正式 JSON 可命名为 `Card.tabx.json`、`Relic.tabx.json` 等，页面名清单为 `page_names.json`。改用新的 JSON 快照前请移走已过时的同名 xlsx，或直接更新下载的 xlsx。
+
+按条目 ID 继承卡牌的 `page/beta_image/predecessor`、遗物的 `page/predecessor`、状态的 `page/allow_negative`、怪物的 `note/page/icon`。已有的空值也原样继承。卡牌和遗物在正式表没有对应 ID 时，`predecessor` 使用去掉末尾升级标记的 `name`；卡牌 `beta_image` 是测试画风链接，不能从解包图片推断，缺少参考时用 `"None"`。
+
+怪物的 `tier/power/stage` 优先采用能确认的游戏信息，否则继承正式表。遭遇等级不能证明单位是否为爪牙或衍生物，因此这些正式分类会保留。自带状态分析只覆盖可静态确认的开场自身状态；不会据此删除正式表中由召唤或状态联动赋予的额外状态。升级初始遗物的角色归属沿源码中的初始遗物替换关系确定。
 
 也可在有网络和 Wiki 凭据时显式保存一次快照：
 
@@ -63,7 +71,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m local_game_data snapshot-wiki
 ```
 
-该命令只读取 Wiki；正常 `extract/export` 不会调用它。随后可以断网导出。使用其他快照目录：
+该命令读取 `wiki.baseline_tables` 指定的正式页；正常 `extract/export` 不会调用它。随后可以断网导出。使用其他快照目录：
 
 ```powershell
 .\.venv\Scripts\python.exe -m local_game_data export --version 0.113.1 --baseline D:\wiki-baseline
@@ -71,7 +79,9 @@ python -m venv .venv
 
 每个 tabx 都有同名 `.report.json`。只有 `ready_to_publish: true` 才表示该表通过提取完整性和基线检查；这不替代人工审核。缺口条目有基线时保留旧行，没有基线时暂不进入 tabx；原始模型及具体原因始终保留在本地数据和报告中。旧条目不会因本次解析失败或源码缺失被自动删除。
 
-卡牌、遗物、怪物缺少 Wiki 基线时会标记为候选数据，避免把页面名、前作对应条目和人工备注当作已核对内容。空值、字符串 `"None"` 和已有自定义图片名都会按基线保留。不会从本作名称猜测前作对应条目。
+卡牌、遗物、状态、怪物缺少 Wiki 基线时会标记为候选数据。每次导出还会写出 `tabx/baseline_comparison.json`，列出参考文件及 SHA256、条目数量、继承字段差异、状态文本差异、怪物数值变化与新增未分类条目。按 ID 匹配不到的旧条目继续保留，并列在各表报告中。
+
+卡牌说明同时对比富文本与 `description_raw`，另列仅颜色/标记写法不同的数量；文本差异不自动视为提取错误，正式服与当前游戏版本的机制、数值变化仍以源码核对。
 
 若只有从 Wiki 复制的部分数据行，可在本地基线 JSON 顶层增加 `"_partial": true`。已知行的人工字段仍会保留，但报告中的 `baseline_partial` 会是 `true`，结果继续标记为候选；此标记不会进入输出表。用完整 Wiki 快照替换后即可解除片段标记。
 
@@ -82,9 +92,11 @@ python -m venv .venv
 - 卡牌按 Wiki 的 16 列输出，包含 `beta_image` 和 `predecessor`，`multiplayer_only` 位于 `page` 之后，值为 `是/否`；分类为 `card_beta`，表头的中文标题与字段名一致。
 - 遗物按 13 列输出，末列为 `predecessor`，分类为 `relic_beta`；`predecessor` 的中文标题为字段名，其余中文标题为空。
 - 怪物按 14 列输出，末列为 `icon`，分类为 `monster_beta`。
-- 状态保持 9 列，分类为 `power`。`allow_negative` 按源码输出字符串 `True/False`。
+- 状态保持 9 列，分类为 `power`。`allow_negative` 沿用正式表的旧约定：已有值直接继承，新条目用字符串 `"None"`，不会用 C# 的 `False` 覆盖。
 
-无已有值时，卡牌 `beta_image` 默认使用字符串 `"None"`，`predecessor` 和怪物 `icon` 默认是 JSON `null`。四张表的顶层说明和表头与维护者提供的 Wiki 格式对应；状态表的 `sources` 使用本次版本。输出文件名继续采用 `cards_<版本>.json` 等形式，对应目标 Wiki 页写入同名报告的 `wiki_page` 字段。
+状态说明根据正式表的展示约定区分通用文字和实例数值。正式表使用 `X` 的层数/回合数从本版 `smartDescription` 渲染为 `X`；描述使用实例 `{Amount}` 时，能从对应卡牌的 Apply 调用确认数值则使用该值，否则保留正式说明。对先初始化为 0、应用后再递增的运行时参数保留通用文字，不把 0 当实际效果。能量统一输出 Wiki 文件链接。各项取舍记录在状态表的 `description_rendering` 报告中。
+
+无参考的卡牌 `beta_image` 使用字符串 `"None"`，怪物 `icon` 为 JSON `null`。四张表的顶层说明和表头与维护者提供的格式对应；状态表的 `sources` 使用本次版本。文件名继续采用 `cards_<版本>.json` 等形式，目标 Wiki 页写入同名报告的 `wiki_page` 字段。
 
 ## 使用旧脚本
 

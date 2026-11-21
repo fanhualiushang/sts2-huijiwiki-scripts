@@ -25,6 +25,15 @@
             "potions": "Data:Potion.tabx",
             "events": "Data:Event.tabx",
             "keywords": "Data:Keyword.tabx"
+        },
+        "baseline_tables": {
+            "cards": "Data:Card.tabx",
+            "relics": "Data:Relic.tabx",
+            "powers": "Data:Power.tabx",
+            "monsters": "Data:Monster.tabx",
+            "potions": "Data:Potion.tabx",
+            "events": "Data:Event.tabx",
+            "keywords": "Data:Keyword.tabx"
         }
     }
 }
