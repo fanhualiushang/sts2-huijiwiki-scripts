@@ -12,21 +12,43 @@ import tempfile
 import subprocess
 from pathlib import Path
 from tag_parser import parse_tag
-from icu import Collator, Locale
-collator = Collator.createInstance(Locale("zh@collation=pinyin"))
+try:
+    from icu import Collator, Locale
+    collator = Collator.createInstance(Locale("zh@collation=pinyin"))
+except ImportError:
+    # PyICU is optional on Windows; retain the same pinyin sorting rules.
+    class PinyinCollator:
+        def getSortKey(self, value):
+            return " ".join(lazy_pinyin(value)).encode("utf-8")
+    collator = PinyinCollator()
 
-site = Site('sts2.huijiwiki.com', custom_headers={
-            'X-authkey': os.environ.get('HUIJI_WIKI_STS2_KEY')})
-site.login(
-    username = os.environ.get('HUIJI_WIKI_USERNAME'),
-    password = os.environ.get('HUIJI_WIKI_PASSWORD'),
-)
+from local_game_data import Dataset
+from local_game_data.wiki import load_tabx as load_local_tabx, records as tabx_records, page_names as local_page_names, write_tabx
 
-ver = '0.109.0'
-use_beta_data = True
+ROOT_DIR = Path(__file__).resolve().parent
+_local_dataset = Dataset(os.environ.get("STS2_DATASET", ROOT_DIR / "local_data/dataset.json"))
+game_source_path = Path(_local_dataset.document.get("source", ROOT_DIR.parent / "sts2_source_code"))
 
-with open('D:\\sts2_bot\\export-0.109.0\\items.json', 'r', encoding='utf-8') as f:
-    data = json.load(f)
+class LazyWikiSite:
+    """Preserve existing site operations, but never log in merely on import."""
+    def __init__(self):
+        self._site = None
+
+    def __getattr__(self, name):
+        if os.environ.get("STS2_OFFLINE") == "1":
+            raise RuntimeError("离线生成阶段不能访问 Wiki；请先保存 Wiki 快照。")
+        if self._site is None:
+            key = os.environ.get('HUIJI_WIKI_STS2_KEY')
+            self._site = Site('sts2.huijiwiki.com', custom_headers={'X-authkey': key} if key else {})
+            self._site.login(username=os.environ.get('HUIJI_WIKI_USERNAME'),
+                             password=os.environ.get('HUIJI_WIKI_PASSWORD'))
+        return getattr(self._site, name)
+
+
+site = LazyWikiSite()
+ver = _local_dataset.version
+use_beta_data = False  # Compatibility only: the recovered local version is authoritative.
+data = _local_dataset.items
 
 color_mapping = {
     "ironclad": "铁甲战士",
@@ -34,6 +56,7 @@ color_mapping = {
     "regent": "储君",
     "necrobinder": "亡灵契约师",
     "defect": "故障机器人",
+    "fool": "愚者",
     "colorless": "无色",
     "event": "事件",
     "status": "状态",
@@ -103,6 +126,7 @@ pool_mapping = {
     "regent": "储君",
     "necrobinder": "亡灵契约师",
     "defect": "故障机器人",
+    "fool": "愚者",
     "event": "事件",
 }
 
@@ -123,6 +147,7 @@ energy_mapping = {
     "ironclad": "ironclad",
     "silent": "silent",
     "defect": "defect",
+    "fool": "fool",
     "necrobinder": "necrobinder",
     "regent": "regent",
     "colorless": "colorless",
@@ -151,13 +176,18 @@ def clean_text(text: str, color: str = "colorless", parsetag: bool = True):
 def del_tags(text):
     return re.sub(r'\[/?[a-z]+(?::\d+)?\]', '', text)
 
+def get_data(route):
+    return _local_dataset.get(route)
+
+
 def get_data_by_api(route):
-    url = f"https://spire-codex.com/api/{route}?lang=zhs"
-    if use_beta_data:
-        url += "&channel=beta"
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.json()
+    """Backward-compatible name; data now comes exclusively from local files."""
+    return get_data(route)
+
+
+def load_wiki_records(page):
+    return tabx_records(load_local_tabx(page))
+
 
 def parse_tabx(page, key_field, value_fields=None):
     """
@@ -169,7 +199,11 @@ def parse_tabx(page, key_field, value_fields=None):
                          如果为 None，则提取所有字段
     :return: dict
     """
-    pagedata = json.loads(site.pages[page].text())
+    pagedata = load_local_tabx(page)
+    if pagedata is None:
+        if os.environ.get("STS2_OFFLINE") == "1":
+            raise FileNotFoundError(f"缺少本地 Wiki 快照 {page}，请先使用 snapshot-wiki 保存。")
+        pagedata = json.loads(site.pages[page].text())
     fields = pagedata['schema']['fields']
     # 建立字段名 -> 索引映射
     field_index = {field['name']: i for i, field in enumerate(fields)}
@@ -204,7 +238,9 @@ def diff_tabx_records(old_data, new_data):
     return sorted(diff_keys)
 
 def update_card_images(ids: list[str]):
-    base_path = 'D:\\sts2_bot\\export-0.109.0'
+    base_path = os.environ.get("STS2_CARD_IMAGES")
+    if not base_path:
+        raise FileNotFoundError("请用 STS2_CARD_IMAGES 指定已有完整卡牌成图目录；解包原画不等同于完整卡牌图。")
     ids = [id.upper() for id in ids]
     print(ids)
     card_images = os.path.join(base_path, 'card-images')

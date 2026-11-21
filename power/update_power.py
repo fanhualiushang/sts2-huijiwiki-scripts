@@ -12,28 +12,6 @@ name_remap = {
     "Temporary Focus": "临时集中",
 }
 
-hardcoded_powers = [
-    {
-        "id": "scrutiny", "name": "细看",
-        "description": "在你的回合内你无法额外抽牌。",
-        "type": "Buff", "stack_type": "Single", "allow_negative": False,
-        "image": "scrutiny_power.png", "page": "细看",
-    },
-    {
-        "id": "grasp", "name": "紧握",
-        "description": "每当你打出一张牌，就失去[[File:colorless_energy_icon.png|16px|link=能量]]。",
-        "type": "Buff", "stack_type": "Single", "allow_negative": False,
-        "image": "grasp_power.png", "page": "紧握",
-    },
-    {
-        "id": "hunger", "name": "饥饿",
-        "description": "当你打出攻击牌或技能牌时，将其{{颜色|gold|消耗}}。",
-        "type": "Buff", "stack_type": "Single", "allow_negative": False,
-        "image": "hunger_power.png", "page": "饥饿",
-    },
-]
-data += hardcoded_powers
-
 for power in data:
     if power.get("description"):
         power["description"] = clean_text(power["description"], power.get("color")).replace("this creature", "该怪物").replace("[Amount]", "X")
@@ -66,6 +44,5 @@ pagedata = json.dumps({
     "data": result,
 }, ensure_ascii=False, indent=2)
 
-with open(f"powers_{ver}.json", "w", encoding="utf-8") as f:
-    f.write(pagedata)
+write_tabx(f"powers_{ver}.json", pagedata)
 # site.pages["Data:Power.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")

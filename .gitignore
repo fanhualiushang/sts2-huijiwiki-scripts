@@ -2,3 +2,5 @@ __pycache__
 .vscode
 .venv
 config.json
+local_data/
+.pytest_cache/

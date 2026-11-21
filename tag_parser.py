@@ -19,6 +19,7 @@ ENERGY_MAPPING = {
     "ironclad": "ironclad",
     "silent": "silent",
     "defect": "defect",
+    "fool": "fool",
     "necrobinder": "necrobinder",
     "regent": "regent",
     "colorless": "colorless",

@@ -4,12 +4,13 @@ from utils import *
 
 print(f"共找到 {len(data['cards'])} 张卡牌数据，正在处理...")
 
-# cards_data_from_api = {card['id']: card for card in get_data_by_api('cards')}
+cards_data_from_api = {card['id']: card for card in get_data_by_api('cards')}
 
-allpages = {page.name for page in site.allpages()}
+allpages = local_page_names()
 
 cards = {}
 has_upgrades = set()
+base_names = {card['id']: card['name'] for card in data['cards'] if card.get('upgrades', 0) == 0 and card.get('name')}
 for card in data['cards']:
     new_card = dict(card)
     card_id = card.get("id", "").lower()
@@ -17,6 +18,7 @@ for card in data['cards']:
     if upgraded == 1:
         has_upgrades.add(card_id)
         card_id += "_upgrade"
+    api_card = cards_data_from_api.get(card.get("id", "").upper(), {})
     new_card = {
         "category": "card",
         "id": card_id,
@@ -26,14 +28,15 @@ for card in data['cards']:
         "type": card.get("type", ""),
         "cost": str(card.get("cost", "")),
         "description": card.get("description", ""),
-        # "compendium_order": str(cards_data_from_api.get(card_id.upper().replace("_UPGRADE", ""), {}).get('compendium_order', "")),
+        "multiplayer_only": api_card.get("multiplayer_only",""),
+        # "compendium_order": str(api_card.get('compendium_order', "")),
         "upgrade": upgraded == 1 and "已升级" or "不可升级_upgrade",
         "image": f'{card_id.lower()}.png',
     }
     
     card_name = card.get("name", "")
     if upgraded == 1:
-        card_name = card_name.replace("+", "")
+        card_name = base_names.get(card['id'], card_name.replace("+", ""))
     card_disambiguated = card_name + "(卡牌)"
     if card_disambiguated in allpages:
         card_name = card_disambiguated
@@ -68,36 +71,6 @@ for card in cards.values():
         card["cost"] = cost_mapping.get(card["cost"], card["cost"])
     if card["cost"] == "":
         card["cost"] = "无"
-
-# 手动添加 "跟进" 卡牌（不在API导出数据中）
-cards["follow_through"] = {
-    "category": "card",
-    "id": "follow_through",
-    "name": "跟进",
-    "color": "静默猎手",
-    "rarity": "普通",
-    "type": "攻击",
-    "cost": "一",
-    "description": "造成7点伤害。<br>如果你的手牌中还有至少5张其他牌，则额外命中一次。",
-    "description_raw": "造成7点伤害。如果你的手牌中还有至少5张其他牌，则额外命中一次。",
-    "upgrade": "follow_through_upgrade",
-    "image": "follow_through.png",
-    "page": "跟进",
-}
-cards["follow_through_upgrade"] = {
-    "category": "card",
-    "id": "follow_through_upgrade",
-    "name": "跟进+",
-    "color": "静默猎手",
-    "rarity": "普通",
-    "type": "攻击",
-    "cost": "一",
-    "description": "造成9点伤害。<br>如果你的手牌中还有至少5张其他牌，则额外命中一次。",
-    "description_raw": "造成9点伤害。如果你的手牌中还有至少5张其他牌，则额外命中一次。",
-    "upgrade": "已升级",
-    "image": "follow_through_upgrade.png",
-    "page": "跟进",
-}
 
 # 从 mapping 的值构建排序顺序
 color_order = list(color_mapping.values())
@@ -167,6 +140,7 @@ field_order = [
     "cost",
     "description",
     "description_raw",
+    "multiplayer_only",
     "upgrade",
     "compendium_order",
     "image",
@@ -182,8 +156,7 @@ pagedata = json.dumps({
     "data": result,
 }, ensure_ascii=False, indent=2)
 
-with open(f"cards_{ver}.json", "w", encoding="utf-8") as f:
-    f.write(pagedata)
+write_tabx(f"cards_{ver}.json", pagedata)
 
 # old_data_parsed = parse_tabx("Data:Card.tabx", "id")
 # site.pages["Data:Card.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")

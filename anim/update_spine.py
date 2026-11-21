@@ -3,7 +3,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from utils import *
 
 # ========= 配置 =========
-ROOT_DIR = Path(r"C:\Users\syw\Downloads\spire-codex\extraction\raw\animations")   # 文件夹A
+ROOT_DIR = Path(os.environ.get("STS2_ANIMATIONS", game_source_path / "animations"))
 MD5_RECORD_FILE = Path(__file__).resolve().parent / "spine_md5.json"
 
 # =======================

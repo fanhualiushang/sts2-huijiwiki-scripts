@@ -9,7 +9,7 @@ data = get_data_by_api("keywords")
 for keyword in data:
     keyword["category"] = "keyword"
     keyword["id"] = keyword["id"].lower()
-    keyword["description"] = del_tags(keyword["description"])
+    keyword["description"] = del_tags(keyword.get("description", ""))
 field_order = [
     "category",
     "id",
@@ -23,6 +23,5 @@ pagedata = json.dumps({
     "data": result,
 }, ensure_ascii=False)
 
-with open(f"keyword_{ver}.json", "w", encoding="utf-8") as f:
-    f.write(pagedata)
+write_tabx(f"keyword_{ver}.json", pagedata)
 # site.pages["Data:Keyword.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")

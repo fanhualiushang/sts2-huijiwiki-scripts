@@ -1,0 +1,82 @@
+{
+  "card": [
+    "category",
+    "id",
+    "name",
+    "color",
+    "rarity",
+    "type",
+    "cost",
+    "description",
+    "description_raw",
+    "multiplayer_only",
+    "upgrade",
+    "compendium_order",
+    "image",
+    "page"
+  ],
+  "relic": [
+    "category",
+    "id",
+    "name",
+    "pool",
+    "tier",
+    "description",
+    "description_raw",
+    "flavor",
+    "ancient",
+    "compendium_order",
+    "image",
+    "page"
+  ],
+  "potion": [
+    "category",
+    "id",
+    "name",
+    "color",
+    "tier",
+    "description",
+    "description_raw",
+    "compendium_order",
+    "image",
+    "page"
+  ],
+  "power": [
+    "category",
+    "id",
+    "name",
+    "description",
+    "type",
+    "stack_type",
+    "allow_negative",
+    "image",
+    "page"
+  ],
+  "monster": [
+    "category",
+    "id",
+    "name",
+    "image",
+    "minHP",
+    "maxHP",
+    "ascenderminHP",
+    "ascendermaxHP",
+    "tier",
+    "power",
+    "stage",
+    "note",
+    "page"
+  ],
+  "event": [
+    "category",
+    "id",
+    "name",
+    "image"
+  ],
+  "keyword": [
+    "category",
+    "id",
+    "name",
+    "description"
+  ]
+}

@@ -97,12 +97,6 @@ data.sort(key=lambda relic: (starter(relic)))
 for idx, relic in enumerate(data):
     relic["compendium_order"] = str(idx + 1)
 
-for relic in data:
-    if relic["id"] == "empty_cage":
-        relic["description"] = "拾起时，选择移除{{颜色|gold|牌组}}中的{{颜色|blue|2}}张牌。"
-    elif relic["id"] == "ninja_scroll":
-        relic["description"] = "每场战斗开始时，将{{颜色|blue|3}}张{{颜色|gold|小刀}}加入你的{{颜色|gold|手牌}}。"
-
 field_order = [
     "category",
     "id",
@@ -127,6 +121,5 @@ pagedata = json.dumps({
     "data": result,
 }, ensure_ascii=False, indent=2)
 
-with open(f"relics_{ver}.json", "w", encoding="utf-8") as f:
-    f.write(pagedata)
+write_tabx(f"relics_{ver}.json", pagedata)
 # site.pages["Data:Relic.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")
