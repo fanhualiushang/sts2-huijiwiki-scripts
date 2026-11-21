@@ -347,8 +347,8 @@ class Extractor:
                 "routes": self.routes, "items": items, "issues": self.issues}
 
 
-def extract(source, version, output, lang="zhs"):
+def extract(source, version, output, lang="zhs", dataset_file=None):
     document = Extractor(source, version, lang).build()
-    write_json(Path(output) / "dataset.json", document)
+    write_json(Path(dataset_file) if dataset_file is not None else Path(output) / "dataset.json", document)
     write_json(Path(output) / "report.json", {k: document[k] for k in ("version", "source", "input_hash", "model_counts", "placeholders", "issues")})
     return document

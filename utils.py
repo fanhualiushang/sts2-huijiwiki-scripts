@@ -23,10 +23,12 @@ except ImportError:
     collator = PinyinCollator()
 
 from local_game_data import Dataset
-from local_game_data.wiki import load_tabx as load_local_tabx, records as tabx_records, page_names as local_page_names, write_tabx
+from local_game_data.config import load_config
+from local_game_data.wiki import load_tabx as load_local_tabx, records as tabx_records, page_names as local_page_names, write_tabx, wiki_page, create_wiki_site
 
 ROOT_DIR = Path(__file__).resolve().parent
-_local_dataset = Dataset(os.environ.get("STS2_DATASET", ROOT_DIR / "local_data/dataset.json"))
+settings = load_config()
+_local_dataset = Dataset(settings.dataset_file)
 game_source_path = Path(_local_dataset.document.get("source", ROOT_DIR.parent / "sts2_source_code"))
 
 class LazyWikiSite:
@@ -35,13 +37,10 @@ class LazyWikiSite:
         self._site = None
 
     def __getattr__(self, name):
-        if os.environ.get("STS2_OFFLINE") == "1":
+        if load_config().offline:
             raise RuntimeError("离线生成阶段不能访问 Wiki；请先保存 Wiki 快照。")
         if self._site is None:
-            key = os.environ.get('HUIJI_WIKI_STS2_KEY')
-            self._site = Site('sts2.huijiwiki.com', custom_headers={'X-authkey': key} if key else {})
-            self._site.login(username=os.environ.get('HUIJI_WIKI_USERNAME'),
-                             password=os.environ.get('HUIJI_WIKI_PASSWORD'))
+            self._site = create_wiki_site()
         return getattr(self._site, name)
 
 
@@ -201,7 +200,7 @@ def parse_tabx(page, key_field, value_fields=None):
     """
     pagedata = load_local_tabx(page)
     if pagedata is None:
-        if os.environ.get("STS2_OFFLINE") == "1":
+        if load_config().offline:
             raise FileNotFoundError(f"缺少本地 Wiki 快照 {page}，请先使用 snapshot-wiki 保存。")
         pagedata = json.loads(site.pages[page].text())
     fields = pagedata['schema']['fields']
@@ -238,7 +237,7 @@ def diff_tabx_records(old_data, new_data):
     return sorted(diff_keys)
 
 def update_card_images(ids: list[str]):
-    base_path = os.environ.get("STS2_CARD_IMAGES")
+    base_path = load_config().optional_path("card_images_dir")
     if not base_path:
         raise FileNotFoundError("请用 STS2_CARD_IMAGES 指定已有完整卡牌成图目录；解包原画不等同于完整卡牌图。")
     ids = [id.upper() for id in ids]

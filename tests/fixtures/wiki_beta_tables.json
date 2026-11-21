@@ -1,0 +1,762 @@
+{
+  "Card_BETA": {
+    "schema": {
+      "fields": [
+        {
+          "name": "category",
+          "type": "string",
+          "title": {
+            "en": "category",
+            "zh": "category"
+          }
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "title": {
+            "en": "id",
+            "zh": "id"
+          }
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "title": {
+            "en": "name",
+            "zh": "name"
+          }
+        },
+        {
+          "name": "color",
+          "type": "string",
+          "title": {
+            "en": "color",
+            "zh": "color"
+          }
+        },
+        {
+          "name": "rarity",
+          "type": "string",
+          "title": {
+            "en": "rarity",
+            "zh": "rarity"
+          }
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "title": {
+            "en": "type",
+            "zh": "type"
+          }
+        },
+        {
+          "name": "cost",
+          "type": "string",
+          "title": {
+            "en": "cost",
+            "zh": "cost"
+          }
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "title": {
+            "en": "description",
+            "zh": "description"
+          }
+        },
+        {
+          "name": "description_raw",
+          "type": "string",
+          "title": {
+            "en": "description_raw",
+            "zh": "description_raw"
+          }
+        },
+        {
+          "name": "upgrade",
+          "type": "string",
+          "title": {
+            "en": "upgrade",
+            "zh": "upgrade"
+          }
+        },
+        {
+          "name": "compendium_order",
+          "type": "string",
+          "title": {
+            "en": "compendium_order",
+            "zh": "compendium_order"
+          }
+        },
+        {
+          "name": "image",
+          "type": "string",
+          "title": {
+            "en": "image",
+            "zh": "image"
+          }
+        },
+        {
+          "name": "beta_image",
+          "type": "string",
+          "title": {
+            "en": "beta_image",
+            "zh": "beta_image"
+          }
+        },
+        {
+          "name": "page",
+          "type": "string",
+          "title": {
+            "en": "page",
+            "zh": "page"
+          }
+        },
+        {
+          "name": "multiplayer_only",
+          "type": "string",
+          "title": {
+            "en": "multiplayer_only",
+            "zh": "multiplayer_only"
+          }
+        },
+        {
+          "name": "predecessor",
+          "type": "string",
+          "title": {
+            "en": "predecessor",
+            "zh": "predecessor"
+          }
+        }
+      ]
+    },
+    "data": [
+      [
+        "card_beta",
+        "strike_ironclad",
+        "打击",
+        "铁甲战士",
+        "初始",
+        "攻击",
+        "一",
+        "造成6点伤害。",
+        "造成6点伤害。",
+        "strike_ironclad_upgrade",
+        "1",
+        "strike_ironclad.png",
+        "None",
+        "打击",
+        "否",
+        "打击（红）"
+      ],
+      [
+        "card_beta",
+        "strike_ironclad_upgrade",
+        "打击+",
+        "铁甲战士",
+        "初始",
+        "攻击",
+        "一",
+        "造成9点伤害。",
+        "造成9点伤害。",
+        "已升级",
+        "2",
+        "strike_ironclad_upgrade.png",
+        "None",
+        "打击",
+        "否",
+        "打击（红）"
+      ],
+      [
+        "card_beta",
+        "bash",
+        "痛击",
+        "铁甲战士",
+        "初始",
+        "攻击",
+        "二",
+        "造成8点伤害。<br>给予2层易伤。",
+        "造成8点伤害。给予2层易伤。",
+        "bash_upgrade",
+        "3",
+        "bash.png",
+        "None",
+        "痛击",
+        "否",
+        "痛击"
+      ],
+      [
+        "card_beta",
+        "bash_upgrade",
+        "痛击+",
+        "铁甲战士",
+        "初始",
+        "攻击",
+        "二",
+        "造成10点伤害。<br>给予3层易伤。",
+        "造成10点伤害。给予3层易伤。",
+        "已升级",
+        "4",
+        "bash_upgrade.png",
+        "None",
+        "痛击",
+        "否",
+        "痛击"
+      ],
+      [
+        "card_beta",
+        "defend_ironclad",
+        "防御",
+        "铁甲战士",
+        "初始",
+        "技能",
+        "一",
+        "获得5点格挡。",
+        "获得5点格挡。",
+        "defend_ironclad_upgrade",
+        "5",
+        "defend_ironclad.png",
+        "None",
+        "防御",
+        "否",
+        "防御（红）"
+      ],
+      [
+        "card_beta",
+        "defend_ironclad_upgrade",
+        "防御+",
+        "铁甲战士",
+        "初始",
+        "技能",
+        "一",
+        "获得8点格挡。",
+        "获得8点格挡。",
+        "已升级",
+        "6",
+        "defend_ironclad_upgrade.png",
+        "None",
+        "防御",
+        "否",
+        "防御（红）"
+      ]
+    ]
+  },
+  "Relic_BETA": {
+    "description": {
+      "zh": "由Tabx编辑器生成"
+    },
+    "schema": {
+      "fields": [
+        {
+          "name": "category",
+          "type": "string",
+          "title": {
+            "en": "category",
+            "zh": ""
+          }
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "title": {
+            "en": "id",
+            "zh": ""
+          }
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "title": {
+            "en": "name",
+            "zh": ""
+          }
+        },
+        {
+          "name": "pool",
+          "type": "string",
+          "title": {
+            "en": "pool",
+            "zh": ""
+          }
+        },
+        {
+          "name": "tier",
+          "type": "string",
+          "title": {
+            "en": "tier",
+            "zh": ""
+          }
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "title": {
+            "en": "description",
+            "zh": ""
+          }
+        },
+        {
+          "name": "description_raw",
+          "type": "string",
+          "title": {
+            "en": "description_raw",
+            "zh": ""
+          }
+        },
+        {
+          "name": "flavor",
+          "type": "string",
+          "title": {
+            "en": "flavor",
+            "zh": ""
+          }
+        },
+        {
+          "name": "ancient",
+          "type": "string",
+          "title": {
+            "en": "ancient",
+            "zh": ""
+          }
+        },
+        {
+          "name": "compendium_order",
+          "type": "string",
+          "title": {
+            "en": "compendium_order",
+            "zh": ""
+          }
+        },
+        {
+          "name": "image",
+          "type": "string",
+          "title": {
+            "en": "image",
+            "zh": ""
+          }
+        },
+        {
+          "name": "page",
+          "type": "string",
+          "title": {
+            "en": "page",
+            "zh": ""
+          }
+        },
+        {
+          "name": "predecessor",
+          "type": "string",
+          "title": {
+            "en": "predecessor",
+            "zh": "predecessor"
+          }
+        }
+      ]
+    },
+    "data": [
+      [
+        "relic_beta",
+        "burning_blood",
+        "燃烧之血",
+        "铁甲战士",
+        "初始",
+        "在战斗结束时，回复{{颜色|green|6}}点生命。",
+        "在战斗结束时，回复6点生命。",
+        "{{颜色|red|这个遗物的细节将在未来揭晓……}}",
+        null,
+        "1",
+        "burning_blood.png",
+        "燃烧之血",
+        "燃烧之血"
+      ],
+      [
+        "relic_beta",
+        "ring_of_the_snake",
+        "蛇之戒指",
+        "静默猎手",
+        "初始",
+        "在每场战斗开始时，额外抽{{颜色|blue|2}}张牌。",
+        "在每场战斗开始时，额外抽2张牌。",
+        "{{颜色|red|这个遗物的细节将在未来揭晓……}}",
+        null,
+        "2",
+        "ring_of_the_snake.png",
+        "蛇之戒指",
+        "蛇之戒指"
+      ],
+      [
+        "relic_beta",
+        "divine_right",
+        "天赋君权",
+        "储君",
+        "初始",
+        "在每场战斗开始时，获得[[File:star_icon.png|16px|link=辉星]][[File:star_icon.png|16px|link=辉星]][[File:star_icon.png|16px|link=辉星]]。",
+        "在每场战斗开始时，获得辉星辉星辉星。",
+        "{{颜色|red|这个遗物的细节将在未来揭晓……}}",
+        null,
+        "3",
+        "divine_right.png",
+        "天赋君权",
+        null
+      ],
+      [
+        "relic_beta",
+        "bound_phylactery",
+        "缚魂命匣",
+        "亡灵契约师",
+        "初始",
+        "在你的回合开始时，{{颜色|gold|召唤}}{{颜色|blue|1}}",
+        "在你的回合开始时，召唤1",
+        "{{颜色|red|这个遗物的细节将在未来揭晓……}}",
+        null,
+        "4",
+        "bound_phylactery.png",
+        "缚魂命匣",
+        null
+      ],
+      [
+        "relic_beta",
+        "cracked_core",
+        "破损核心",
+        "故障机器人",
+        "初始",
+        "在每场战斗开始时，{{颜色|gold|生成}}{{颜色|blue|1}}个{{颜色|gold|闪电}}充能球。",
+        "在每场战斗开始时，生成1个闪电充能球。",
+        "{{颜色|red|这个遗物的细节将在未来揭晓……}}",
+        null,
+        "5",
+        "cracked_core.png",
+        "破损核心",
+        "破损核心"
+      ]
+    ]
+  },
+  "Power_BETA": {
+    "description": {
+      "zh": ""
+    },
+    "sources": "导出数据自版本 0.113.0",
+    "schema": {
+      "fields": [
+        {
+          "name": "category",
+          "type": "string",
+          "title": {
+            "en": "category",
+            "zh": ""
+          }
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "title": {
+            "en": "id",
+            "zh": ""
+          }
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "title": {
+            "en": "name",
+            "zh": ""
+          }
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "title": {
+            "en": "description",
+            "zh": ""
+          }
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "title": {
+            "en": "type",
+            "zh": ""
+          }
+        },
+        {
+          "name": "stack_type",
+          "type": "string",
+          "title": {
+            "en": "stack_type",
+            "zh": ""
+          }
+        },
+        {
+          "name": "allow_negative",
+          "type": "string",
+          "title": {
+            "en": "allow_negative",
+            "zh": ""
+          }
+        },
+        {
+          "name": "image",
+          "type": "string",
+          "title": {
+            "en": "image",
+            "zh": ""
+          }
+        },
+        {
+          "name": "page",
+          "type": "string",
+          "title": {
+            "en": "page",
+            "zh": ""
+          }
+        }
+      ]
+    },
+    "data": [
+      [
+        "power",
+        "accelerant",
+        "触媒",
+        "{{颜色|gold|中毒}}会多触发一次。",
+        "Buff",
+        "Counter",
+        "None",
+        "accelerant_power.png",
+        "触媒"
+      ],
+      [
+        "power",
+        "accuracy",
+        "精准",
+        "{{颜色|gold|小刀}}造成额外伤害。",
+        "Buff",
+        "Counter",
+        "None",
+        "accuracy_power.png",
+        "精准"
+      ],
+      [
+        "power",
+        "adaptable",
+        "适者生存",
+        "当这个怪物将要被击败时，它会复活变得更加强大。",
+        "Buff",
+        "Single",
+        "None",
+        "adaptable_power.png",
+        "适者生存"
+      ],
+      [
+        "power",
+        "aeonglass_dominion",
+        "永世沙漏的支配",
+        "在你的回合开始时，将{{颜色|blue|1}}张{{颜色|gold|凋萎}}添加到你的{{颜色|gold|抽牌堆}}顶。",
+        "Debuff",
+        "Counter",
+        "None",
+        "aeonglass_dominion_power.png",
+        "永世沙漏的支配"
+      ],
+      [
+        "power",
+        "afterimage",
+        "余像",
+        "你每打出一张牌，都获得{{颜色|blue|1}}点{{颜色|gold|格挡}}。",
+        "Buff",
+        "Counter",
+        "None",
+        "afterimage_power.png",
+        "余像"
+      ]
+    ]
+  },
+  "Monster_BETA": {
+    "description": {
+      "zh": "由Tabx编辑器生成"
+    },
+    "schema": {
+      "fields": [
+        {
+          "name": "category",
+          "type": "string",
+          "title": {
+            "en": "category",
+            "zh": ""
+          }
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "title": {
+            "en": "id",
+            "zh": ""
+          }
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "title": {
+            "en": "name",
+            "zh": ""
+          }
+        },
+        {
+          "name": "image",
+          "type": "string",
+          "title": {
+            "en": "image",
+            "zh": ""
+          }
+        },
+        {
+          "name": "minHP",
+          "type": "string",
+          "title": {
+            "en": "minHP",
+            "zh": ""
+          }
+        },
+        {
+          "name": "maxHP",
+          "type": "string",
+          "title": {
+            "en": "maxHP",
+            "zh": ""
+          }
+        },
+        {
+          "name": "ascenderminHP",
+          "type": "string",
+          "title": {
+            "en": "ascenderminHP",
+            "zh": ""
+          }
+        },
+        {
+          "name": "ascendermaxHP",
+          "type": "string",
+          "title": {
+            "en": "ascendermaxHP",
+            "zh": ""
+          }
+        },
+        {
+          "name": "tier",
+          "type": "string",
+          "title": {
+            "en": "tier",
+            "zh": ""
+          }
+        },
+        {
+          "name": "power",
+          "type": "string",
+          "title": {
+            "en": "power",
+            "zh": ""
+          }
+        },
+        {
+          "name": "stage",
+          "type": "string",
+          "title": {
+            "en": "stage",
+            "zh": ""
+          }
+        },
+        {
+          "name": "note",
+          "type": "string",
+          "title": {
+            "en": "note",
+            "zh": ""
+          }
+        },
+        {
+          "name": "page",
+          "type": "string",
+          "title": {
+            "en": "page",
+            "zh": ""
+          }
+        },
+        {
+          "name": "icon",
+          "type": "string",
+          "title": {
+            "en": "icon",
+            "zh": ""
+          }
+        }
+      ]
+    },
+    "data": [
+      [
+        "monster_beta",
+        "aeonglass",
+        "永世沙漏",
+        "aeonglass.png",
+        "512",
+        "512",
+        "535",
+        "535",
+        "Boss",
+        "{{状态|凋萎存在}}6{{状态|人工制品}}3",
+        "荣耀",
+        "无",
+        "永世沙漏",
+        "aeonglass_bossicon.png"
+      ],
+      [
+        "monster_beta",
+        "architect",
+        "建筑师",
+        "architect.png",
+        "9999",
+        "9999",
+        "9999",
+        "9999",
+        "普通",
+        null,
+        null,
+        "占位符",
+        "建筑师",
+        null
+      ],
+      [
+        "monster_beta",
+        "assassin_ruby_raider",
+        "劫掠者刺客",
+        "assassin_ruby_raider.png",
+        "18",
+        "23",
+        "19",
+        "24",
+        "普通",
+        null,
+        "密林",
+        "无",
+        "劫掠者刺客",
+        null
+      ],
+      [
+        "monster_beta",
+        "axe_ruby_raider",
+        "劫掠者斧手",
+        "axe_ruby_raider.png",
+        "20",
+        "22",
+        "21",
+        "23",
+        "普通",
+        null,
+        "密林",
+        "无",
+        "劫掠者斧手",
+        null
+      ]
+    ]
+  }
+}

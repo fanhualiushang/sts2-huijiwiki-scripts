@@ -8,23 +8,13 @@ from types import SimpleNamespace
 
 import pytest
 
-from local_game_data import Dataset, extract
+from local_game_data import Dataset
 from local_game_data.csharp import ExtractionError
 from local_game_data.formatting import render
 from local_game_data.wiki import export_all, write_tabx, write_json, load_tabx
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT.parent / "sts2_source_code"
-
-
-@pytest.fixture(scope="session")
-def extracted(tmp_path_factory):
-    if not SOURCE.is_dir():
-        pytest.skip("Real recovered game source is local-only; see README for integration tests")
-    out = tmp_path_factory.mktemp("game-data")
-    extract(SOURCE, "0.113.1", out)
-    return out
 
 
 def test_nested_formats_and_unsupported_variables():
@@ -87,18 +77,31 @@ def test_all_original_writers_offline_and_schema(extracted, tmp_path, monkeypatc
     monkeypatch.setattr(mwclient, "Site", forbidden)
     export_all(extracted / "dataset.json", tmp_path)
     contract = json.loads((ROOT / "tests/fixtures/original_fields.json").read_text(encoding="utf-8"))
+    beta = json.loads((ROOT / "tests/fixtures/wiki_beta_tables.json").read_text(encoding="utf-8"))
     for category, fields in contract.items():
         filename = ("keyword" if category == "keyword" else category + "s") + "_0.113.1.json"
         doc = json.loads((tmp_path / filename).read_text(encoding="utf-8"))
-        assert [f["name"] for f in doc["schema"]["fields"]] == fields
-        assert all(f == {"name": f["name"], "type": "string", "title": {"en": f["name"], "zh": ""}} for f in doc["schema"]["fields"])
-        assert doc["sources"] == "导出数据自版本 0.113.1"
+        page = category.title() + "_BETA"
+        if page in beta:
+            assert doc["schema"] == beta[page]["schema"]
+            fields = [f["name"] for f in beta[page]["schema"]["fields"]]
+            assert doc.get("description") == beta[page].get("description")
+            if category == "power": assert doc["sources"] == "导出数据自版本 0.113.1"
+            else: assert "sources" not in doc
+        else:
+            assert [f["name"] for f in doc["schema"]["fields"]] == fields
+            assert all(f == {"name": f["name"], "type": "string", "title": {"en": f["name"], "zh": ""}} for f in doc["schema"]["fields"])
+            assert doc["sources"] == "导出数据自版本 0.113.1"
         assert doc["data"] and all(len(row) == len(fields) for row in doc["data"])
         ids = [row[fields.index("id")] for row in doc["data"]]
         assert len(ids) == len(set(ids))
         if category == "card":
             by_id = {r[fields.index("id")]: r for r in doc["data"]}
             assert by_id["dingy_dagger_upgrade"][fields.index("page")] == by_id["dingy_dagger"][fields.index("page")]
+            assert all(r[fields.index("multiplayer_only")] in ("是", "否") for r in doc["data"])
+        if category == "power":
+            assert all(r[fields.index("category")] == "power" for r in doc["data"])
+            assert all(r[fields.index("allow_negative")] in ("True", "False") for r in doc["data"])
     sys.modules.pop("utils", None)
 
 
@@ -113,6 +116,8 @@ def test_legacy_wiki_connection_is_lazy(extracted, monkeypatch):
             calls.append("login")
     monkeypatch.setattr(mwclient, "Site", FakeSite)
     monkeypatch.setenv("STS2_DATASET", str(extracted / "dataset.json"))
+    monkeypatch.setenv("HUIJI_WIKI_USERNAME", "test-user")
+    monkeypatch.setenv("HUIJI_WIKI_PASSWORD", "test-password")
     monkeypatch.delenv("STS2_OFFLINE", raising=False)
     sys.modules.pop("utils", None)
     module = importlib.import_module("utils")
@@ -134,26 +139,30 @@ def test_incomplete_records_preserve_baseline(tmp_path, monkeypatch):
     write_json(tmp_path / "dataset.json", dataset)
     fields = [{"name": x} for x in ("id", "name", "description")]
     baseline = {"schema": {"fields": fields}, "data": [["old", "旧名称", "人工核对的旧说明"], ["missing", "旧条目", "不能静默删除"]]}
-    write_json(tmp_path / "baseline/Power.tabx.json", baseline)
+    write_json(tmp_path / "baseline/Power_BETA.tabx.json", baseline)
     monkeypatch.setenv("STS2_DATASET", str(tmp_path / "dataset.json"))
     monkeypatch.setenv("STS2_WIKI_BASELINE", str(tmp_path / "baseline"))
     candidate = {"sources": "test", "schema": {"fields": fields}, "data": [["old", "新名称", ""], ["new", "新增", ""]]}
     target = tmp_path / "powers_test.json"
     write_tabx(target, candidate)
     result = json.loads(target.read_text(encoding="utf-8"))
-    assert result["data"] == baseline["data"]
+    actual_fields = [f["name"] for f in result["schema"]["fields"]]
+    assert [[r[actual_fields.index(f)] for f in ("id", "name", "description")] for r in result["data"]] == baseline["data"]
+    assert all(r[actual_fields.index("category")] == "power" for r in result["data"])
     assert not json.loads(Path(str(target) + ".report.json").read_text(encoding="utf-8"))["ready_to_publish"]
 
 
 def test_monster_editorial_fields_are_preserved(extracted, tmp_path, monkeypatch):
     fields = ["id", "name", "minHP", "tier", "power", "stage", "note", "page"]
     schema = {"fields": [{"name": x} for x in fields]}
-    write_json(tmp_path / "baseline/Monster.tabx.json", {"schema": schema, "data": [["test_subject", "旧名", "旧数值", "Boss", "原有状态列表", "第三幕", "人工备注", "实验体"]]})
+    write_json(tmp_path / "baseline/Monster_BETA.tabx.json", {"schema": schema, "data": [["test_subject", "旧名", "旧数值", "Boss", "原有状态列表", "第三幕", "人工备注", "实验体"]]})
     monkeypatch.setenv("STS2_DATASET", str(extracted / "dataset.json"))
     monkeypatch.setenv("STS2_WIKI_BASELINE", str(tmp_path / "baseline"))
     target = tmp_path / "monsters_test.json"
     write_tabx(target, {"schema": schema, "data": [["test_subject", "实验体 #C8", "100 / 200 / 300", "", "", "", "无", "新标题"]]})
-    row = json.loads(target.read_text(encoding="utf-8"))["data"][0]
+    result = json.loads(target.read_text(encoding="utf-8"))
+    output_fields = [f["name"] for f in result["schema"]["fields"]]
+    row = [result["data"][0][output_fields.index(f)] for f in fields]
     assert row[2] == "100 / 200 / 300"
     assert row[3:] == ["Boss", "原有状态列表", "第三幕", "人工备注", "实验体"]
 

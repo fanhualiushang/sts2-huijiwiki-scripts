@@ -78,5 +78,5 @@ pagedata = json.dumps({
     "data": result,
 }, ensure_ascii=False, indent=2)
 
-write_tabx(f"events_{ver}.json", pagedata)
-# site.pages["Data:Event.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")
+pagedata = write_tabx(f"events_{ver}.json", pagedata)
+# site.pages[wiki_page("events")].save(pagedata, summary=f"导出数据自版本 {ver}")

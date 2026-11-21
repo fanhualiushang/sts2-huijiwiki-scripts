@@ -20,7 +20,7 @@ for card in data['cards']:
         card_id += "_upgrade"
     api_card = cards_data_from_api.get(card.get("id", "").upper(), {})
     new_card = {
-        "category": "card",
+        "category": "card_beta",
         "id": card_id,
         "name": card.get("name", ""),
         "color": card.get("color", ""),
@@ -28,10 +28,12 @@ for card in data['cards']:
         "type": card.get("type", ""),
         "cost": str(card.get("cost", "")),
         "description": card.get("description", ""),
-        "multiplayer_only": api_card.get("multiplayer_only",""),
+        "multiplayer_only": "是" if api_card.get("multiplayer_only") is True else "否" if api_card.get("multiplayer_only") is False else "None",
         # "compendium_order": str(api_card.get('compendium_order', "")),
         "upgrade": upgraded == 1 and "已升级" or "不可升级_upgrade",
         "image": f'{card_id.lower()}.png',
+        "beta_image": "None",
+        "predecessor": None,
     }
     
     card_name = card.get("name", "")
@@ -140,11 +142,13 @@ field_order = [
     "cost",
     "description",
     "description_raw",
-    "multiplayer_only",
     "upgrade",
     "compendium_order",
     "image",
+    "beta_image",
     "page",
+    "multiplayer_only",
+    "predecessor",
 ]
 result = [[cards[card_id].get(field) for field in field_order] for card_id in sorted_card_ids]
 
@@ -156,10 +160,10 @@ pagedata = json.dumps({
     "data": result,
 }, ensure_ascii=False, indent=2)
 
-write_tabx(f"cards_{ver}.json", pagedata)
+pagedata = write_tabx(f"cards_{ver}.json", pagedata)
 
 # old_data_parsed = parse_tabx("Data:Card.tabx", "id")
-# site.pages["Data:Card.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")
+# site.pages[wiki_page("cards")].save(pagedata, summary=f"导出数据自版本 {ver}")
 # new_data_parsed = parse_tabx("Data:Card.tabx", "id")
 # diff = diff_tabx_records(old_data_parsed, new_data_parsed)
 # update_card_images(diff)

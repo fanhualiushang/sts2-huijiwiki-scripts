@@ -1,7 +1,30 @@
 {
-    "huijiwiki":{
-        "username": "",
-        "password": "",
-        "X-authkey": ""
+    "game": {
+        "source_dir": "../sts2_source_code",
+        "version": "0.113.1",
+        "language": "zhs"
+    },
+    "paths": {
+        "output_dir": "local_data",
+        "dataset_file": null,
+        "baseline_dir": null,
+        "card_images_dir": null,
+        "animations_dir": null
+    },
+    "wiki": {
+        "host": "sts2.huijiwiki.com",
+        "offline": false,
+        "username_env": "HUIJI_WIKI_USERNAME",
+        "password_env": "HUIJI_WIKI_PASSWORD",
+        "authkey_env": "HUIJI_WIKI_STS2_KEY",
+        "tables": {
+            "cards": "Data:Card_BETA.tabx",
+            "relics": "Data:Relic_BETA.tabx",
+            "powers": "Data:Power_BETA.tabx",
+            "monsters": "Data:Monster_BETA.tabx",
+            "potions": "Data:Potion.tabx",
+            "events": "Data:Event.tabx",
+            "keywords": "Data:Keyword.tabx"
+        }
     }
 }

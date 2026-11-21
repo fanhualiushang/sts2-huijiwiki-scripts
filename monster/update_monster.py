@@ -2,12 +2,13 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from utils import *
 
-monster_data = load_wiki_records("Data:Monster.tabx")
+monster_data = load_wiki_records(wiki_page("monsters"))
 
 data = get_data_by_api("monsters")
 
 for monster in data:
-    monster["category"] = "monster"
+    monster["category"] = "monster_beta"
+    monster["icon"] = monster_data.get(monster["id"].lower(), {}).get("icon")
     monster["id"] = monster["id"].lower()
     monster["image"] = f'{monster["id"]}.png'
     monster["minHP"] = str(monster.get("min_hp", ""))
@@ -53,6 +54,7 @@ field_order = [
     "stage",
     "note",
     "page",
+    "icon",
 ]
 result = [[monster.get(field) for field in field_order] for monster in data]
 pagedata = json.dumps({
@@ -61,5 +63,5 @@ pagedata = json.dumps({
     "data": result,
 }, ensure_ascii=False)
 
-write_tabx(f"monsters_{ver}.json", pagedata)
-# site.pages["Data:Monster.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")
+pagedata = write_tabx(f"monsters_{ver}.json", pagedata)
+# site.pages[wiki_page("monsters")].save(pagedata, summary=f"导出数据自版本 {ver}")

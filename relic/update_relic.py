@@ -20,7 +20,7 @@ for relic in data:
         relic["description"] = clean_text(relic["description"], relic.get("pool", ""))
     if relic.get("flavor"):
         relic["flavor"] = clean_text(relic["flavor"], relic.get("pool", ""))
-    relic["category"] = "relic"
+    relic["category"] = "relic_beta"
     relic["id"] = relic["id"].lower()
     relic["image"] = f'{relic["id"]}.png'
     if relic.get("pool"):
@@ -31,7 +31,8 @@ for relic in data:
         if not tier_mapping.get(relic["rarity"]):
             print(f"未找到tier中文名: {relic['rarity']}")
         relic["tier"] = tier_mapping.get(relic["rarity"], relic["rarity"])
-    relic["ancient"] = relic_to_ancient_name.get(relic["id"], "")
+    relic["ancient"] = relic_to_ancient_name.get(relic["id"])
+    relic["predecessor"] = None
     relic["page"] = relic["name"]
 
 # 从 mapping 的值构建排序顺序
@@ -110,6 +111,7 @@ field_order = [
     "compendium_order",
     "image",
     "page",
+    "predecessor",
 ]
 result = [[relic.get(field) for field in field_order] for relic in data]
 
@@ -121,5 +123,5 @@ pagedata = json.dumps({
     "data": result,
 }, ensure_ascii=False, indent=2)
 
-write_tabx(f"relics_{ver}.json", pagedata)
-# site.pages["Data:Relic.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")
+pagedata = write_tabx(f"relics_{ver}.json", pagedata)
+# site.pages[wiki_page("relics")].save(pagedata, summary=f"导出数据自版本 {ver}")

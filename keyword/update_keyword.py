@@ -23,5 +23,5 @@ pagedata = json.dumps({
     "data": result,
 }, ensure_ascii=False)
 
-write_tabx(f"keyword_{ver}.json", pagedata)
-# site.pages["Data:Keyword.tabx"].save(pagedata, summary=f"导出数据自版本 {ver}")
+pagedata = write_tabx(f"keyword_{ver}.json", pagedata)
+# site.pages[wiki_page("keywords")].save(pagedata, summary=f"导出数据自版本 {ver}")
