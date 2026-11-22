@@ -93,6 +93,8 @@ python -m venv .venv
 
 默认目标为 `Data:Card_BETA.tabx`、`Data:Relic_BETA.tabx`、`Data:Power_BETA.tabx`、`Data:Monster_BETA.tabx`；其他三类维持原页面名，均可在 `wiki.tables` 中指定。
 
+生成正式版时使用独立配置和输出目录：将 `wiki.tables` 指向正式页 `Data:Card.tabx`、`Data:Relic.tabx`、`Data:Monster.tabx` 等，分类会相应使用 `card/relic/monster`；状态始终使用 `power`。不同版本或正式/测试通道请使用不同输出目录，避免读取彼此的历史归档。
+
 - 卡牌按 Wiki 的 16 列输出，包含 `beta_image` 和 `predecessor`，`multiplayer_only` 位于 `page` 之后，值为 `是/否`；分类为 `card_beta`，表头的中文标题与字段名一致。
 - 遗物按 13 列输出，末列为 `predecessor`，分类为 `relic_beta`；`predecessor` 的中文标题为字段名，其余中文标题为空。
 - 怪物按 14 列输出，末列为 `icon`，分类为 `monster_beta`。

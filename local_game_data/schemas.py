@@ -1,4 +1,4 @@
-"""Published Huiji BETA table contracts supplied by the wiki maintainer."""
+"""Published Huiji table contracts supplied by the wiki maintainer."""
 from copy import deepcopy
 
 
@@ -34,10 +34,12 @@ def document_for(category, rows, version):
     return result
 
 
-def normalize_record(category, record):
+def normalize_record(category, record, target_page=None):
     result = {**deepcopy(DEFAULT_VALUES.get(category, {})), **record}
     if category in CATEGORY_VALUES:
         result["category"] = CATEGORY_VALUES[category]
+        if category in ("cards", "relics", "monsters") and target_page and not target_page.upper().endswith("_BETA.TABX"):
+            result["category"] = category.removesuffix("s")
     if category == "cards":
         value = result.get("multiplayer_only")
         if value in (True, "True", "true", "是"):

@@ -7,9 +7,18 @@ import pytest
 
 from local_game_data.config import load_config
 from local_game_data.wiki import export_all, write_json, snapshot_wiki
+from local_game_data.schemas import normalize_record
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+@pytest.mark.parametrize(("category", "normal", "beta"), [("cards", "card", "card_beta"), ("relics", "relic", "relic_beta"), ("monsters", "monster", "monster_beta")])
+def test_category_follows_stable_or_beta_target(category, normal, beta):
+    table = normal.title()
+    assert normalize_record(category, {}, f"Data:{table}.tabx")["category"] == normal
+    assert normalize_record(category, {}, f"Data:{table}_BETA.tabx")["category"] == beta
+    assert normalize_record("powers", {}, "Data:Power_BETA.tabx")["category"] == "power"
 
 
 def test_config_paths_and_env_overrides(tmp_path, monkeypatch):

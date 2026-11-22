@@ -193,7 +193,7 @@ def write_tabx(filename, content, sort_key=None):
     target_fields = FIELDS.get(category, fields)
     normalized = {}
     for key, row in merged.items():
-        normalized[key] = normalize_record(category, row)
+        normalized[key] = normalize_record(category, row, target_page=page)
     ordered = list(normalized.values())
     if sort_key is not None:
         ordered.sort(key=lambda row: sort_key(row, normalized))
