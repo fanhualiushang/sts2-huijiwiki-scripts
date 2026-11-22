@@ -12,7 +12,7 @@ from .dataset import Dataset, write_json
 from .config import load_config
 from .baseline import read_tabx_xlsx
 from .schemas import FIELDS, EDITORIAL_FIELDS, document_for, normalize_record
-from .power_text import reconcile_description
+from .power_text import reconcile_description, normalize_temporary_stat_description
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -193,6 +193,11 @@ def write_tabx(filename, content, sort_key=None):
     target_fields = FIELDS.get(category, fields)
     normalized = {}
     for key, row in merged.items():
+        if category == "powers":
+            description = normalize_temporary_stat_description(row.get("description"))
+            if description != row.get("description"):
+                row = {**row, "description": description}
+                description_choices.append({"id": key, "mode": "temporary_stat_amount", "rule": "five_temporary_stat_patterns"})
         normalized[key] = normalize_record(category, row, target_page=page)
     ordered = list(normalized.values())
     if sort_key is not None:

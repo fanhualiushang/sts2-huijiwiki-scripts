@@ -5,6 +5,24 @@ from .csharp import ExtractionError
 from .formatting import render
 
 
+TEMPORARY_STAT_PATTERNS = (("获得", "集中"), ("获得", "敏捷"), ("获得", "力量"),
+                           ("失去", "力量"), ("失去", "集中"))
+
+
+def normalize_temporary_stat_description(value):
+    """Apply the maintainer's five exhaustive temporary-stat wording rules.
+
+    This is a final Wiki display rule, including descriptions retained from
+    a reference table. Already quantified text and other effects stay intact.
+    """
+    if not isinstance(value, str): return value
+    for action, stat in TEMPORARY_STAT_PATTERNS:
+        prefix = "在本回合结束前" + action
+        tail = "{{颜色|gold|" + stat + "}}。"
+        value = value.replace(prefix + tail, prefix + "{{颜色|blue|X}}点" + tail)
+    return value
+
+
 def differs_only_in_variable_quantity(reference, candidate):
     """Ignore only an X/count phrase and its colour wrapper, never fixed numbers."""
     def skeleton(value):
