@@ -2,6 +2,7 @@ __pycache__
 .vscode
 .venv
 config.json
+config.stable.json
 local_data/
 .pytest_cache/
 history/

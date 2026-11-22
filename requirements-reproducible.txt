@@ -1,0 +1,21 @@
+# Verified on Windows x64, Python 3.12.14. Includes test dependencies.
+# PyICU is intentionally absent: this environment uses pypinyin collation.
+certifi==2026.11.20
+charset-normalizer==3.5.2
+colorama==0.4.6
+idna==3.20
+iniconfig==2.3.1
+mwclient==0.11.0
+mwparserfromhell==0.7.2
+oauthlib==4.0.1
+packaging==26.3
+pluggy==1.7.0
+Pygments==2.21.0
+pypinyin==0.55.0
+pytest==9.2.0
+requests==2.34.2
+requests-oauthlib==2.0.0
+tqdm==4.70.1
+tree-sitter==0.26.1
+tree-sitter-c-sharp==0.24.0
+urllib3==2.8.0

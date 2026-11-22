@@ -2,6 +2,8 @@
 
 在原有维护脚本基础上，将 Spire Codex API 和模组 `items.json` 替换为 GDRE 完整恢复目录。保留原来的 `utils.data`、`get_data_by_api(route)` 和分类脚本输出格式。代码源自 [HarryS561/sts2-huijiwiki-scripts](https://github.com/HarryS561/sts2-huijiwiki-scripts)，在本 fork 独立维护。
 
+更换电脑时，按 [换机与复现说明](MIGRATION.md) 安装已验证的依赖，并恢复 Wiki 基线、历史归档和对应的 GDRE 恢复目录。正式版的便携配置见 `config.stable.example.json`。
+
 ## 安装
 
 需要 Python 3.12 或以上。先创建自己的虚拟环境：
@@ -84,6 +86,8 @@ python -m venv .venv
 卡牌和遗物另有永久历史归档：每次导出读取同目录已有版本及 `tabx/history/cards.json`、`tabx/history/relics.json`，历史 ID 与本次数据、正式表取并集。即使后续源码和基线均不再包含某遗物，仍保留其最后记录。归档使用临时文件后原子替换，序列化失败不覆盖旧文件。请随数据备份 `history` 目录；它不进入代码提交。状态与怪物不使用此额外归档，以便你主动清理非游戏内条目。
 
 卡牌和遗物在所有历史条目合并完后，按原分类脚本的排序规则重新排列，再把 `compendium_order` 设为字符串 `1..N`；不继承 xlsx 或历史记录的旧编号。
+
+卡牌的排序条件依次为角色、稀有度、类型、费用、中文名；遗物先按初始遗物的指定顺序，再按等级、角色池、先古之民、中文名或 ID 排列。状态和怪物沿用本地数据的 ID 顺序，只有基线中的旧条目追加在末尾。`ancient` 等排序字段改变时，行位置和后续行号会随之改变。要复现相同文件，需使用相同的源码、配置、基线、历史归档和依赖环境；当前已验证环境使用 pypinyin，没有安装可选 PyICU。
 
 卡牌、遗物、状态、怪物缺少 Wiki 基线时会标记为候选数据。每次导出还会写出 `tabx/baseline_comparison.json`，列出参考文件及 SHA256、条目数量、继承字段差异、状态文本差异、怪物数值变化与新增未分类条目。按 ID 匹配不到的旧条目继续保留，并列在各表报告中。
 
