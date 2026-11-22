@@ -22,7 +22,7 @@ for relic in data:
         relic["flavor"] = clean_text(relic["flavor"], relic.get("pool", ""))
     relic["category"] = "relic_beta"
     relic["id"] = relic["id"].lower()
-    relic["image"] = f'{relic["id"]}.png'
+    relic["image"] = relic.get("image", f'{relic["id"]}.png')
     if relic.get("pool"):
         if not pool_mapping.get(relic["pool"]):
             print(f"未找到pool中文名: {relic['pool']}")
@@ -31,7 +31,7 @@ for relic in data:
         if not tier_mapping.get(relic["rarity"]):
             print(f"未找到tier中文名: {relic['rarity']}")
         relic["tier"] = tier_mapping.get(relic["rarity"], relic["rarity"])
-    relic["ancient"] = relic_to_ancient_name.get(relic["id"])
+    relic["ancient"] = relic_to_ancient_name.get(relic["id"]) or relic_to_ancient_name.get(relic.get("_variant_of", "").lower())
     relic["predecessor"] = None
     relic["page"] = relic["name"]
 
@@ -123,5 +123,5 @@ pagedata = json.dumps({
     "data": result,
 }, ensure_ascii=False, indent=2)
 
-pagedata = write_tabx(f"relics_{ver}.json", pagedata)
+pagedata = write_tabx(f"relics_{ver}.json", pagedata, sort_key=lambda row, merged: (starter(row), get_sort_key(row)))
 # site.pages[wiki_page("relics")].save(pagedata, summary=f"导出数据自版本 {ver}")

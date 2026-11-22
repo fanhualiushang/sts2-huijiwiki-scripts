@@ -80,9 +80,10 @@ rarity_order = list(rarity_mapping.values())
 type_order = list(type_mapping.values())
 cost_order = list(cost_mapping.values())
 
-def get_sort_key(card_id):
+def get_sort_key(card_id, all_cards=None):
     """根据指定规则生成排序键"""
-    card = cards.get(card_id.replace("_upgrade", ""))
+    collection = cards if all_cards is None else all_cards
+    card = collection.get(card_id.removesuffix("_upgrade")) or collection.get(card_id)
     if not card:
         return (float('inf'), float('inf'), float('inf'), float('inf'), "")
     
@@ -160,7 +161,7 @@ pagedata = json.dumps({
     "data": result,
 }, ensure_ascii=False, indent=2)
 
-pagedata = write_tabx(f"cards_{ver}.json", pagedata)
+pagedata = write_tabx(f"cards_{ver}.json", pagedata, sort_key=lambda row, merged: get_sort_key(row["id"], merged))
 
 # old_data_parsed = parse_tabx("Data:Card.tabx", "id")
 # site.pages[wiki_page("cards")].save(pagedata, summary=f"导出数据自版本 {ver}")

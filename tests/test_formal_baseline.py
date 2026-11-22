@@ -110,6 +110,7 @@ def test_monster_metadata_does_not_drop_spawn_buffs(formal_export):
     assert generated["fat_gremlin"]["tier"] == "衍生"
     assert generated["aeonglass"]["power"] == baseline["aeonglass"]["power"]
     assert generated["axebot"]["power"] == "{{状态|库存}}2"
+    assert generated["corpse_slug"]["power"] == "{{状态|ravenous}}4 （高进阶5）"
     comparison = json.loads((formal_export / "baseline_comparison.json").read_text(encoding="utf-8"))
     assert comparison["tables"]["cards"]["field_difference_counts"]["predecessor"] == 0
     assert comparison["tables"]["cards"]["field_difference_counts"]["beta_image"] == 0

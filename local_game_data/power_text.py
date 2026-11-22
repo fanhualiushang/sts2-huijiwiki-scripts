@@ -5,8 +5,20 @@ from .csharp import ExtractionError
 from .formatting import render
 
 
+def differs_only_in_variable_quantity(reference, candidate):
+    """Ignore only an X/count phrase and its colour wrapper, never fixed numbers."""
+    def skeleton(value):
+        # The wrapper is optional: formal tables use both blue X and bare X.
+        value = re.sub(r'\{\{颜色\|[^{}|]+\|X\}\}(?:点)?', '', value)
+        return re.sub(r'(?<![A-Za-z0-9_])X(?:点)?', '', value)
+    return bool(reference and candidate and reference != candidate and "X" in reference
+                and skeleton(reference) == skeleton(candidate))
+
+
 def reconcile_description(game, reference, generated):
     old_text = reference.get("description") or ""
+    if differs_only_in_variable_quantity(old_text, generated):
+        return old_text, {"mode": "formal_variable_quantity", "reason": "Only the X/count wording differs"}
     template = game.get("smart_description_template")
     # The formal table explicitly uses X for these stack/turn counts. Keep
     # that notation while taking wording and fixed constants from this version.

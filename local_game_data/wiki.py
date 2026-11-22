@@ -85,7 +85,7 @@ def wiki_page(category):
     return load_config().page_for(category)
 
 
-def write_tabx(filename, content):
+def write_tabx(filename, content, sort_key=None):
     """Keep the original schema, retain baseline rows/values on extraction gaps.
 
     Incomplete new records are withheld. A table without the baseline needed to
@@ -99,19 +99,38 @@ def write_tabx(filename, content):
     page = settings.page_for(category)
     baseline_document = load_tabx(page)
     baseline = records(baseline_document)
+    destination = Path(filename).resolve()
+    history_file = destination.parent / "history" / (category + ".json") if category in ("cards", "relics") else None
+    historical = {}
+    prior_exports = [p for p in destination.parent.glob(category + "_*.json")
+                     if not p.name.endswith(".report.json") and p != destination]
+    prior_exports.sort(key=lambda p: tuple(int(n) for n in re.findall(r"\d+", p.stem)))
+    for path in (history_file, *prior_exports, destination) if history_file else ():
+        if path.is_file():
+            historical.update(records(json.loads(path.read_text(encoding="utf-8-sig"))))
+    retained = {**historical, **baseline}
     dataset = Dataset(settings.dataset_file)
     source_rows = dataset.items["cards"] if category == "cards" else dataset.get(category)
     source = {}
     for row in source_rows:
         key = row["id"].lower() + ("_upgrade" if row.get("upgrades") == 1 else "")
         source[key] = row
-    merged, withheld, preserved, description_choices, metadata_fallbacks = {}, [], [], [], []
+    merged, withheld, preserved, description_choices, metadata_fallbacks, variant_aliases = {}, [], [], [], [], []
     power_aliases = {r["id"].lower(): r.get("_wiki_page", r.get("name")) for r in dataset.document["routes"].get("powers", [])}
     def power_tags(value):
         return {power_aliases.get(name.lower(), name) for name in re.findall(r'\{\{状态\|([^}|]+)', value or "")}
     for row in document["data"]:
         record = dict(zip(fields, row))
         key = record["id"]
+        game = source.get(key, {})
+        if key not in retained and game.get("_variant_of"):
+            # Preserve an existing Wiki ID for a uniquely named instance form.
+            aliases = [old_id for old_id, old in retained.items() if old.get("name") == record.get("name")]
+            if len(aliases) == 1:
+                variant_aliases.append({"generated_id": key, "wiki_id": aliases[0]})
+                key = aliases[0]
+                record["id"] = key
+                source[key] = game
         errors = source.get(key, {}).get("_errors", {})
         # These errors invalidate the rendered row even when a scalar field
         # happened to have a default value in the legacy formatter.
@@ -124,8 +143,8 @@ def write_tabx(filename, content):
             relevant.add("pool")
         if relevant:
             withheld.append({"id": key, "fields": sorted(relevant), "errors": errors})
-            if key in baseline:
-                merged[key] = baseline[key]
+            if key in retained:
+                merged[key] = retained[key]
                 preserved.append(key)
             continue
         if key in baseline:
@@ -134,6 +153,8 @@ def write_tabx(filename, content):
                 # Null, "None" and empty strings can be intentional Wiki values.
                 if field in old:
                     record[field] = old[field]
+            if game.get("_variant_of") and old.get("image"):
+                record["image"] = old["image"]
             if category == "monsters":
                 for field in ("tier", "power", "stage"):
                     if source.get(key, {}).get(field) is not None:
@@ -148,6 +169,15 @@ def write_tabx(filename, content):
                 if missing_effects:
                     record["power"] = old["power"]
                     metadata_fallbacks.append({"id": key, "field": "power", "reason": "self_hook_does_not_cover_existing_spawn_effects", "retained_effects": sorted(missing_effects)})
+                if old.get("power") and record.get("power"):
+                    # A formal table may deliberately use an ID to disambiguate
+                    # duplicate names. Keep that token even when the source's
+                    # display title resolves to the same text as another power.
+                    preferred = {power_aliases.get(token.lower(), token): token
+                                 for token in re.findall(r'\{\{状态\|([^}|]+)', old["power"])
+                                 if token.lower() in power_aliases}
+                    record["power"] = re.sub(r'(\{\{状态\|)([^}|]+)',
+                                              lambda m: m[1] + preferred.get(m[2], m[2]), record["power"])
         if category in ("cards", "relics") and key not in baseline:
             record["predecessor"] = re.sub(r"\+\d*$", "", record.get("name", ""))
         if category == "powers":
@@ -156,24 +186,37 @@ def write_tabx(filename, content):
             if choice: description_choices.append({"id": key, **choice})
         merged[key] = record
     # Missing models can be a decompilation gap rather than a game removal.
-    for key, row in baseline.items():
+    for key, row in retained.items():
         if key not in merged:
             merged[key] = row
             preserved.append(key)
     target_fields = FIELDS.get(category, fields)
-    normalized = []
+    normalized = {}
     for key, row in merged.items():
-        normalized.append(normalize_record(category, row))
-    rows = [[r.get(f) for f in target_fields] for r in normalized]
+        normalized[key] = normalize_record(category, row)
+    ordered = list(normalized.values())
+    if sort_key is not None:
+        ordered.sort(key=lambda row: sort_key(row, normalized))
+    if "compendium_order" in target_fields:
+        for position, row in enumerate(ordered, 1):
+            row["compendium_order"] = str(position)
+    rows = [[r.get(f) for f in target_fields] for r in ordered]
     if category in FIELDS:
         document = document_for(category, rows, dataset.version)
     else:
         document["data"] = rows
     write_json(filename, document)
+    if history_file is not None: write_json(history_file, document)
     missing_editorial_baseline = category in EDITORIAL_FIELDS and baseline_document is None
     partial_baseline = bool(baseline_document and baseline_document.get("_partial"))
     status = {"category": category, "rows": len(document["data"]), "withheld": withheld,
-              "preserved_baseline_ids": sorted(set(preserved)),
+              "preserved_baseline_ids": sorted(set(preserved) & baseline.keys()),
+              "preserved_historical_ids": sorted(set(preserved) & historical.keys()),
+              "historical_rows": len(historical),
+              "history_archive": str(history_file) if history_file is not None else None,
+              "source_rows": len(source_rows),
+              "instance_variant_ids": sorted(r["id"].lower() for r in source_rows if r.get("_variant_of")),
+              "variant_id_aliases": variant_aliases,
               "editorial_baseline_missing": missing_editorial_baseline,
               "baseline_partial": partial_baseline,
               "baseline_source": baseline_document.get("_baseline_source") if baseline_document else None,

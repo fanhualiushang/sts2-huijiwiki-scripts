@@ -4,8 +4,10 @@ from copy import deepcopy
 from decimal import Decimal
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
+import tempfile
 
 from .csharp import Evaluator, ExtractionError, SourceIndex, Symbol, Var, ForeignModel, LocValue, children, slug, text
 from .formatting import number, render
@@ -24,7 +26,18 @@ def json_default(value):
 def write_json(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, ensure_ascii=False, indent=2, default=json_default) + "\n", encoding="utf-8")
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
+                                         prefix=path.name + ".", suffix=".tmp", delete=False) as stream:
+            temporary = Path(stream.name)
+            json.dump(value, stream, ensure_ascii=False, indent=2, default=json_default)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary.replace(path)
+    finally:
+        if temporary is not None and temporary.exists(): temporary.unlink()
 
 
 class Dataset:
@@ -61,6 +74,7 @@ class Extractor:
         self.issues, self.counts = [], {}
         self.routes = {k: [] for k in ("cards", "relics", "potions", "powers", "monsters", "events", "ancients", "keywords", "enchantments", "afflictions")}
         self.card_variants = []
+        self.variant_counts = {}
         self.pools = self.get_pools()
         self.relic_upgrade_pools = self.get_relic_upgrade_pools()
 
@@ -349,6 +363,27 @@ class Extractor:
                 record.setdefault("_metadata_gaps", {})["power"] = str(exc)
             self.routes["monsters"].append(record)
 
+    def relic_variants(self):
+        base = next((r for r in self.routes["relics"] if r["_class"] == "SeaGlass"), None)
+        if base is None: return
+        _, declarations = self.index.find("ModelDb", "AllCharacters")
+        characters = re.findall(r"\bCharacter<(\w+)>\(\)", text(declarations[0]))
+        ev = Evaluator(self.index, self.index.types["SeaGlass"])
+        ev.initialize_vars()
+        for character in dict.fromkeys(characters):
+            entry = slug(character)
+            variant = deepcopy(base)
+            variant.update(id=base["id"] + "_" + entry, _variant_of=base["id"], _variant_key=entry,
+                           image=base["_model_id"].lower() + ".png")
+            self.attempt(variant, "name", lambda: self.loc("relics", base["_model_id"] + "." + entry + ".title"))
+            def description():
+                context = self.context(ev, variant)
+                context["Character"] = Var("Character", self.loc("characters", entry + ".title"))
+                return render(self.loc("relics", base["_model_id"] + ".description"), context)
+            self.attempt(variant, "description", description)
+            self.routes["relics"].append(variant)
+            self.variant_counts["relics"] = self.variant_counts.get("relics", 0) + 1
+
     def events(self):
         models = list(self.index.models("EventModel"))
         self.counts["events"] = len(models)
@@ -364,6 +399,17 @@ class Extractor:
             record["description"] = self.tables[table].get(entry + ".pages.INITIAL.description", "")
             record["options"] = []
             record["relics"] = sorted({slug(x) for x in re.findall(r"RelicOption<(\w+)>", text(model.node))})
+            # Parameterised relic options are constructed first and passed to
+            # the nongeneric RelicOption overload, e.g. Orobas.SeaGlassOptions.
+            for member_name, nodes in model.members.items():
+                if not member_name.endswith("Options") or not isinstance(nodes, list): continue
+                body = text(nodes[0])
+                if "RelicOption(" not in body: continue
+                for relic_class in re.findall(r"ModelDb\.Relic<(\w+)>\(\)\.ToMutable", body):
+                    model_id = slug(relic_class)
+                    record["relics"].extend(r["id"] for r in self.routes["relics"]
+                                             if r["_model_id"] == model_id)
+            record["relics"] = sorted(set(record["relics"]))
             for key, value in record["pages"].items():
                 if ".pages.INITIAL.options." in key and key.endswith(".title"):
                     record["options"].extend((value, record["pages"].get(key[:-6] + ".description", "")))
@@ -390,6 +436,7 @@ class Extractor:
         self.cards()
         for category, base in (("relics", "RelicModel"), ("potions", "PotionModel"), ("powers", "PowerModel"), ("enchantments", "EnchantmentModel"), ("afflictions", "AfflictionModel")):
             self.simple_models(category, base)
+        self.relic_variants()
         self.monsters()
         self.events()
         self.keywords()
@@ -412,11 +459,14 @@ class Extractor:
         return {"schema_version": 1, "version": self.version, "lang": self.lang, "source": str(self.source),
                 "input_hash": hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest(),
                 "model_counts": self.counts, "placeholders": self.index.placeholders,
+                "variant_counts": self.variant_counts,
                 "routes": self.routes, "items": items, "issues": self.issues}
 
 
 def extract(source, version, output, lang="zhs", dataset_file=None):
     document = Extractor(source, version, lang).build()
     write_json(Path(dataset_file) if dataset_file is not None else Path(output) / "dataset.json", document)
-    write_json(Path(output) / "report.json", {k: document[k] for k in ("version", "source", "input_hash", "model_counts", "placeholders", "issues")})
+    report = {k: document[k] for k in ("version", "source", "input_hash", "model_counts", "placeholders", "issues")}
+    report["variant_counts"] = document.get("variant_counts", {})
+    write_json(Path(output) / "report.json", report)
     return document

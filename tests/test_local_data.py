@@ -62,7 +62,7 @@ def test_other_categories_and_inventory(extracted):
     assert "ARCANE_SCROLL" in routes["events"]["NEOW"]["relics"]
     assert routes["potions"]["BOTTLED_SONG"]["pool"] == "fool"
     for category, total in d.document["model_counts"].items():
-        assert len(d.get(category)) == total
+        assert len(d.get(category)) == total + d.document.get("variant_counts", {}).get(category, 0)
     for rows in d.document["routes"].values():
         assert len({r["id"] for r in rows}) == len(rows)
         assert all(".Mocks" not in r.get("_source", "") for r in rows)

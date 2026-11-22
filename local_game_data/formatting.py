@@ -106,12 +106,15 @@ def render(template, variables):
             # Chinese has one plural category. The final branch is the generic one.
             choice = choices[-1]
         elif fmt == "cond":
-            choice = choices[-1]
-            for item in choices:
-                pair = split_top(item, "?", 1)
-                if len(pair) == 2 and condition(pair[0], scalar):
-                    choice = pair[1]
-                    break
+            if isinstance(scalar, (str, bool)) and len(choices) == 2 and not any(len(split_top(c, "?", 1)) == 2 for c in choices):
+                choice = choices[0] if scalar else choices[1]
+            else:
+                choice = choices[-1]
+                for item in choices:
+                    pair = split_top(item, "?", 1)
+                    if len(pair) == 2 and condition(pair[0], scalar):
+                        choice = pair[1]
+                        break
         elif not fmt and isinstance(scalar, bool):
             choice = choices[0] if scalar else choices[1] if len(choices) > 1 else ""
         elif not fmt and len(choices) > 1:

@@ -112,7 +112,9 @@ def starting_power_text(extractor, model, power_lookup):
         power = power_lookup.get(name)
         if power is None or not power.get("name"):
             raise ExtractionError(f"Missing power name for starting buff {name}")
-        title = power.get("_wiki_page", power["name"])
+        # "饥饿" also names a different historical power on this Wiki.
+        # Use its stable ID even when there is no existing monster reference.
+        title = "ravenous" if power["id"] == "RAVENOUS" else power.get("_wiki_page", power["name"])
         part = "{{状态|" + title + "}}"
         if power.get("stack_type") != "Single":
             part += number(amount)

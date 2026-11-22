@@ -30,6 +30,11 @@ def write_comparison(dataset_path, output):
         table = {"reference_file": source_file, "reference_rows": len(old), "output_rows": len(current),
                  "new_ids": sorted(current.keys() - old.keys()), "missing_reference_ids": sorted(old.keys() - current.keys()),
                  "field_difference_counts": {}, "differences": []}
+        table["source_model_count"] = dataset.document.get("model_counts", {}).get(category)
+        table["source_variant_count"] = dataset.document.get("variant_counts", {}).get(category, 0)
+        if current and "compendium_order" in next(iter(current.values())):
+            table["consecutive_compendium_order"] = all(row.get("compendium_order") == str(i)
+                                                        for i, row in enumerate(current.values(), 1))
         if source_file and Path(source_file).is_file():
             table["reference_sha256"] = hashlib.sha256(Path(source_file).read_bytes()).hexdigest()
         for field in fields:

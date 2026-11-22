@@ -4,3 +4,4 @@ __pycache__
 config.json
 local_data/
 .pytest_cache/
+history/
