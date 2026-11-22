@@ -8,7 +8,7 @@ from .dataset import Dataset, write_json
 
 COMPARE_FIELDS = {
     "cards": ("predecessor", "beta_image", "name", "description", "description_raw"),
-    "relics": ("predecessor", "pool", "name", "description"),
+    "relics": ("predecessor", "pool", "ancient", "name", "description"),
     "powers": ("allow_negative", "page", "name", "description"),
     "monsters": ("tier", "power", "stage", "minHP", "maxHP", "ascenderminHP", "ascendermaxHP"),
 }

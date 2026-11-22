@@ -385,6 +385,7 @@ class Extractor:
             self.variant_counts["relics"] = self.variant_counts.get("relics", 0) + 1
 
     def events(self):
+        from .event_relics import option_relic_classes
         models = list(self.index.models("EventModel"))
         self.counts["events"] = len(models)
         for model in models:
@@ -398,7 +399,13 @@ class Extractor:
             record["pages"] = {k: v for k, v in self.tables[table].items() if k.startswith(entry + ".")}
             record["description"] = self.tables[table].get(entry + ".pages.INITIAL.description", "")
             record["options"] = []
-            record["relics"] = sorted({slug(x) for x in re.findall(r"RelicOption<(\w+)>", text(model.node))})
+            if ancient:
+                relic_classes, relic_sources = option_relic_classes(self.index, model)
+            else:
+                relic_classes = set(re.findall(r"RelicOption<(\w+)>", text(model.node)))
+                relic_sources = []
+            record["relics"] = sorted(slug(x) for x in relic_classes)
+            record["_relic_option_sources"] = relic_sources
             # Parameterised relic options are constructed first and passed to
             # the nongeneric RelicOption overload, e.g. Orobas.SeaGlassOptions.
             for member_name, nodes in model.members.items():

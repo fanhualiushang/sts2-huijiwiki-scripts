@@ -115,6 +115,7 @@ def test_monster_metadata_does_not_drop_spawn_buffs(formal_export):
     assert comparison["tables"]["cards"]["field_difference_counts"]["predecessor"] == 0
     assert comparison["tables"]["cards"]["field_difference_counts"]["beta_image"] == 0
     assert comparison["tables"]["powers"]["unconverted_energy_token_ids"] == []
+    assert "ancient" in comparison["tables"]["relics"]["field_difference_counts"]
 
 
 def test_formal_xlsx_has_priority_over_old_beta_fragment(monkeypatch):

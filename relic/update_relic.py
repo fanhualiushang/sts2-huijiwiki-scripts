@@ -7,6 +7,8 @@ print(f"共找到 {len(data)} 个遗物数据，正在处理...")
 
 relic_to_ancient_name = {}
 for item in get_data_by_api("events"):
+    if not item.get("_ancient"):
+        continue
     event_name = item.get("name", "UNKNOWN_EVENT")
     relics = item.get("relics")
     if not relics or not isinstance(relics, list):
